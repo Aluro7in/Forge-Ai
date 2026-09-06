@@ -1,0 +1,10 @@
+{
+  "name": "Forge",
+  "description": "A collaborative workspace built for two users: humans and AI agents. Humans set intent; agents use WebMCP to plan, create, modify, and organize real workspace data under human control.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+:root {
+  /* High-Contrast Light Theme CSS Variables */
+  --bg-app: #FDFCFB;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F8F7F4;
+  --bg-surface-hover: #F0EDE7;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FCFAF7;
+  --bg-modal: #FFFFFF;
+  --text-main: #111827;
+  --text-muted: #374151;
+  --text-subtle: #6B7280;
+  --text-dim: #9CA3AF;
+  --border-main: #E5E7EB;
+  --border-strong: #111827;
+  --border-subtle: #F3F4F6;
+  --accent-amber: #F59E0B;
+  --accent-emerald: #10B981;
+  --shadow-card: 2px 2px 0px 0px rgba(0, 0, 0, 0.06);
+  --shadow-strong: 3px 3px 0px 0px rgba(0, 0, 0, 0.15);
+}
+
+.dark {
+  /* High-Contrast Dark Theme CSS Variables */
+  --bg-app: #0A0D14;
+  --bg-surface: #111622;
+  --bg-surface-subtle: #161D2C;
+  --bg-surface-hover: #1E283C;
+  --bg-card: #131926;
+  --bg-sidebar: #0E121B;
+  --bg-modal: #131926;
+  --text-main: #F9FAFB;
+  --text-muted: #D1D5DB;
+  --text-subtle: #9CA3AF;
+  --text-dim: #6B7280;
+  --border-main: #2E384D;
+  --border-strong: #E2E8F0;
+  --border-subtle: #1C2333;
+  --accent-amber: #F59E0B;
+  --accent-emerald: #10B981;
+  --shadow-card: 2px 2px 0px 0px rgba(0, 0, 0, 0.5);
+  --shadow-strong: 3px 3px 0px 0px rgba(255, 255, 255, 0.12);
+}
+
+@theme {
+  --color-workspace-bg: var(--bg-app);
+  --color-workspace-surface: var(--bg-surface);
+  --color-workspace-subtle: var(--bg-surface-subtle);
+  --color-workspace-hover: var(--bg-surface-hover);
+  --color-workspace-card: var(--bg-card);
+  --color-workspace-sidebar: var(--bg-sidebar);
+  --color-workspace-text: var(--text-main);
+  --color-workspace-muted: var(--text-muted);
+  --color-workspace-subtle-text: var(--text-subtle);
+  --color-workspace-faint-text: var(--text-dim);
+  --color-workspace-border: var(--border-main);
+  --color-workspace-border-strong: var(--border-strong);
+  --color-workspace-border-subtle: var(--border-subtle);
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+.font-serif {
+  font-family: 'Newsreader', Georgia, Cambria, 'Times New Roman', serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* High-contrast dark theme style overrides mapped to CSS variables */
+.dark body {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+}
+
+.dark .bg-white {
+  background-color: var(--bg-surface) !important;
+}
+
+.dark .bg-\[\#FDFCFB\] {
+  background-color: var(--bg-app) !important;
+}
+
+.dark .bg-\[\#FCFAF7\] {
+  background-color: var(--bg-sidebar) !important;
+}
+
+.dark .bg-stone-50,
+.dark .bg-stone-100 {
+  background-color: var(--bg-surface-subtle) !important;
+}
+
+.dark .hover\:bg-stone-50:hover,
+.dark .hover\:bg-stone-100:hover {
+  background-color: var(--bg-surface-hover) !important;
+}
+
+.dark .text-black,
+.dark .text-\[\#1A1A1A\] {
+  color: var(--text-main) !important;
+}
+
+.dark .text-stone-800,
+.dark .text-stone-700 {
+  color: var(--text-muted) !important;
+}
+
+.dark .text-stone-600,
+.dark .text-stone-500 {
+  color: var(--text-subtle) !important;
+}
+
+.dark .border-stone-200,
+.dark .border-stone-300 {
+  border-color: var(--border-main) !important;
+}
+
+.dark .border-stone-400 {
+  border-color: var(--border-strong) !important;
+}
+
+.dark .border-black {
+  border-color: var(--border-strong) !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: var(--bg-surface-subtle) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-main) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--text-dim) !important;
+}
+
+.dark .shadow-xs,
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.7) !important;
+}
+
+.dark .bg-black {
+  background-color: #E2E8F0 !important;
+  color: #0A0D14 !important;
+}
+
+.dark .bg-black * {
+  color: #0A0D14 !important;
+}
+
+.dark .hover\:bg-stone-800:hover {
+  background-color: #CBD5E1 !important;
+}
