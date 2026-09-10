@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -18,8 +18,15 @@ import {
   ArchiveRestore,
   Save,
   Flame,
+  MessageSquare,
+  Send,
+  Sparkles,
+  FileText,
+  Activity,
+  UserCheck,
+  MessageCircle,
 } from 'lucide-react';
-import { Task, TaskPriority, TaskStatus, Milestone, Subtask } from '../types/forge';
+import { Task, TaskPriority, TaskStatus, Milestone, Subtask, TaskComment, TaskCommentType } from '../types/forge';
 
 interface TaskCardModalProps {
   task: Task | null;
@@ -162,6 +169,80 @@ export const PRIORITY_CONFIG: Record<
   },
 };
 
+export const COMMENT_TYPE_CONFIG: Record<
+  TaskCommentType,
+  {
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badgeClass: string;
+    borderClass: string;
+    accentClass: string;
+    description: string;
+  }
+> = {
+  note: {
+    label: 'Note',
+    icon: FileText,
+    badgeClass: 'bg-stone-100 text-stone-700 border-stone-300',
+    borderClass: 'border-l-stone-400',
+    accentClass: 'text-stone-600',
+    description: 'General memo, link, or context note',
+  },
+  feedback: {
+    label: 'Feedback',
+    icon: Sparkles,
+    badgeClass: 'bg-purple-50 text-purple-800 border-purple-300',
+    borderClass: 'border-l-purple-500',
+    accentClass: 'text-purple-600',
+    description: 'Design review, critique, or advice',
+  },
+  status_update: {
+    label: 'Status Update',
+    icon: Activity,
+    badgeClass: 'bg-blue-50 text-blue-800 border-blue-300',
+    borderClass: 'border-l-blue-600',
+    accentClass: 'text-blue-600',
+    description: 'Progress checkpoint or blocker status',
+  },
+};
+
+export function getAuthorInitials(author: string): string {
+  if (!author) return '??';
+  if (author.toLowerCase().includes('agent')) return 'AI';
+  const parts = author.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return author.substring(0, 2).toUpperCase();
+}
+
+export function formatCommentTimestamp(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.round(diffMs / (1000 * 60));
+    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return d.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 export const TaskCardModal: React.FC<TaskCardModalProps> = ({
   task,
   isOpen,
@@ -183,10 +264,18 @@ export const TaskCardModal: React.FC<TaskCardModalProps> = ({
   const [dueDate, setDueDate] = useState<string>(task.dueDate || '');
   const [milestoneId, setMilestoneId] = useState<string>(task.milestoneId || '');
   const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
+  const [comments, setComments] = useState<TaskComment[]>(task.comments || []);
 
   // New subtask input state
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // New comment input & filter state
+  const [commentContent, setCommentContent] = useState('');
+  const [commentType, setCommentType] = useState<TaskCommentType>('note');
+  const [commentAuthor, setCommentAuthor] = useState(task.assignee || 'Founder A (Tech)');
+  const [commentFilter, setCommentFilter] = useState<'all' | TaskCommentType>('all');
+  const [isPostingComment, setIsPostingComment] = useState(false);
 
   // Sync state if task changes
   useEffect(() => {
@@ -199,6 +288,8 @@ export const TaskCardModal: React.FC<TaskCardModalProps> = ({
     setDueDate(task.dueDate || '');
     setMilestoneId(task.milestoneId || '');
     setSubtasks(task.subtasks || []);
+    setComments(task.comments || []);
+    setCommentAuthor(task.assignee || 'Founder A (Tech)');
   }, [task]);
 
   // Subtask calculations
@@ -209,6 +300,19 @@ export const TaskCardModal: React.FC<TaskCardModalProps> = ({
 
   // Due Date analysis
   const dateAnalysis = getDueDateAnalysis(dueDate, status === 'done');
+
+  // Comment filter calculations
+  const filteredComments = useMemo(() => {
+    const list = [...comments].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    if (commentFilter === 'all') return list;
+    return list.filter((c) => c.type === commentFilter);
+  }, [comments, commentFilter]);
+
+  const countNotes = comments.filter((c) => c.type === 'note').length;
+  const countFeedback = comments.filter((c) => c.type === 'feedback').length;
+  const countUpdates = comments.filter((c) => c.type === 'status_update').length;
 
   // Subtask handlers
   const handleAddSubtask = (e?: React.FormEvent) => {
@@ -242,6 +346,73 @@ export const TaskCardModal: React.FC<TaskCardModalProps> = ({
     );
   };
 
+  // Comments handlers
+  const handleAddComment = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!commentContent.trim()) return;
+
+    setIsPostingComment(true);
+    const newComment: TaskComment = {
+      id: `comm-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      author: commentAuthor || assignee || 'Founder A (Tech)',
+      content: commentContent.trim(),
+      type: commentType,
+      createdAt: new Date().toISOString(),
+    };
+
+    const nextComments = [...comments, newComment];
+    setComments(nextComments);
+    setCommentContent('');
+
+    // Optimistically persist to parent so notes are immediately saved
+    try {
+      const updated: Task = {
+        ...task,
+        title: title.trim(),
+        description: description.trim(),
+        status,
+        priority,
+        assignee,
+        estimateDays: Number(estimateDays),
+        dueDate: dueDate || undefined,
+        milestoneId: milestoneId || undefined,
+        subtasks,
+        comments: nextComments,
+        updatedAt: new Date().toISOString(),
+      };
+      await onSave(updated);
+    } catch (err) {
+      console.error('Failed to auto-save added comment:', err);
+    } finally {
+      setIsPostingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    const nextComments = comments.filter((c) => c.id !== commentId);
+    setComments(nextComments);
+
+    try {
+      const updated: Task = {
+        ...task,
+        title: title.trim(),
+        description: description.trim(),
+        status,
+        priority,
+        assignee,
+        estimateDays: Number(estimateDays),
+        dueDate: dueDate || undefined,
+        milestoneId: milestoneId || undefined,
+        subtasks,
+        comments: nextComments,
+        updatedAt: new Date().toISOString(),
+      };
+      await onSave(updated);
+    } catch (err) {
+      console.error('Failed to auto-save deleted comment:', err);
+    }
+  };
+
   // Quick date presets
   const setQuickDate = (offsetDays: number) => {
     const d = new Date();
@@ -263,6 +434,7 @@ export const TaskCardModal: React.FC<TaskCardModalProps> = ({
       dueDate: dueDate || undefined,
       milestoneId: milestoneId || undefined,
       subtasks,
+      comments,
       updatedAt: new Date().toISOString(),
     };
 
@@ -323,6 +495,13 @@ export const TaskCardModal: React.FC<TaskCardModalProps> = ({
                 {task.archived && (
                   <span className="px-2 py-0.5 bg-stone-200 text-stone-700 text-[10px] font-mono uppercase font-bold border border-stone-300">
                     Archived
+                  </span>
+                )}
+
+                {comments.length > 0 && (
+                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-mono uppercase bg-white border border-stone-300 text-stone-700">
+                    <MessageSquare className="w-3 h-3 text-stone-500" />
+                    <span>{comments.length} {comments.length === 1 ? 'Note' : 'Notes'}</span>
                   </span>
                 )}
               </div>
@@ -669,6 +848,247 @@ export const TaskCardModal: React.FC<TaskCardModalProps> = ({
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Comments, Feedback & Status Updates Section */}
+            <div className="border border-stone-300 bg-[#FCFAF7] p-4 sm:p-5 space-y-4">
+              {/* Header with Title and Filter Tabs */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200">
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="w-4 h-4 text-black" />
+                  <span className="font-bold text-xs uppercase tracking-wider text-black font-mono">
+                    Discussion & Activity Notes
+                  </span>
+                  <span className="text-[10px] font-mono font-bold bg-white border border-stone-300 text-stone-700 px-2 py-0.5">
+                    {comments.length}
+                  </span>
+                </div>
+
+                {/* Filter Buttons */}
+                <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono uppercase">
+                  <button
+                    type="button"
+                    onClick={() => setCommentFilter('all')}
+                    className={`px-2.5 py-1 border transition ${
+                      commentFilter === 'all'
+                        ? 'bg-black text-white font-bold border-black'
+                        : 'bg-white text-stone-600 hover:text-black border-stone-300'
+                    }`}
+                  >
+                    All ({comments.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCommentFilter('note')}
+                    className={`flex items-center space-x-1 px-2 py-1 border transition ${
+                      commentFilter === 'note'
+                        ? 'bg-stone-800 text-white font-bold border-stone-800'
+                        : 'bg-white text-stone-600 hover:text-black border-stone-300'
+                    }`}
+                  >
+                    <FileText className="w-2.5 h-2.5" />
+                    <span>Notes ({countNotes})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCommentFilter('feedback')}
+                    className={`flex items-center space-x-1 px-2 py-1 border transition ${
+                      commentFilter === 'feedback'
+                        ? 'bg-purple-800 text-white font-bold border-purple-800'
+                        : 'bg-white text-stone-600 hover:text-black border-stone-300'
+                    }`}
+                  >
+                    <Sparkles className="w-2.5 h-2.5 text-purple-400" />
+                    <span>Feedback ({countFeedback})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCommentFilter('status_update')}
+                    className={`flex items-center space-x-1 px-2 py-1 border transition ${
+                      commentFilter === 'status_update'
+                        ? 'bg-blue-800 text-white font-bold border-blue-800'
+                        : 'bg-white text-stone-600 hover:text-black border-stone-300'
+                    }`}
+                  >
+                    <Activity className="w-2.5 h-2.5 text-blue-400" />
+                    <span>Updates ({countUpdates})</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Comments List */}
+              <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                {filteredComments.length === 0 ? (
+                  <div className="py-7 text-center bg-white border border-dashed border-stone-300 p-4 space-y-1">
+                    <MessageCircle className="w-6 h-6 mx-auto text-stone-300 stroke-1" />
+                    <p className="text-[11px] font-mono uppercase tracking-wider text-stone-500">
+                      {commentFilter === 'all'
+                        ? 'No notes or updates yet'
+                        : `No ${commentFilter.replace('_', ' ')} items`}
+                    </p>
+                    <p className="text-[10px] text-stone-400 font-sans">
+                      Leave notes, feedback, or a status update using the form below.
+                    </p>
+                  </div>
+                ) : (
+                  filteredComments.map((comm) => {
+                    const typeCfg = COMMENT_TYPE_CONFIG[comm.type] || COMMENT_TYPE_CONFIG.note;
+                    const TypeIcon = typeCfg.icon;
+                    const initials = getAuthorInitials(comm.author);
+
+                    return (
+                      <div
+                        key={comm.id}
+                        className={`p-3.5 bg-white border border-stone-300 border-l-4 ${typeCfg.borderClass} space-y-2 shadow-2xs group transition hover:border-stone-400`}
+                      >
+                        {/* Comment Metadata Row */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center space-x-2">
+                            {/* Author Avatar Initials */}
+                            <div
+                              className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-mono border ${
+                                comm.author.includes('Agent')
+                                  ? 'bg-purple-100 text-purple-900 border-purple-300'
+                                  : comm.author.includes('Tech')
+                                  ? 'bg-blue-100 text-blue-900 border-blue-300'
+                                  : 'bg-stone-200 text-stone-800 border-stone-300'
+                              }`}
+                              title={comm.author}
+                            >
+                              {initials}
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs font-semibold text-stone-900 font-sans">
+                                {comm.author}
+                              </span>
+                              <span className="text-[10px] text-stone-400 font-mono">•</span>
+                              <span
+                                className="text-[10px] font-mono text-stone-500"
+                                title={comm.createdAt}
+                              >
+                                {formatCommentTimestamp(comm.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            {/* Type badge */}
+                            <span
+                              className={`inline-flex items-center space-x-1 px-2 py-0.5 text-[9px] font-mono uppercase font-bold border ${typeCfg.badgeClass}`}
+                            >
+                              <TypeIcon className="w-2.5 h-2.5 shrink-0" />
+                              <span>{typeCfg.label}</span>
+                            </span>
+
+                            {/* Delete Comment */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteComment(comm.id)}
+                              className="text-stone-300 hover:text-red-600 p-1 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                              title="Delete comment"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Comment Body */}
+                        <p className="text-xs text-stone-800 font-sans leading-relaxed whitespace-pre-wrap pl-8">
+                          {comm.content}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* New Comment Composer */}
+              <form onSubmit={handleAddComment} className="bg-white border border-stone-300 p-3.5 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono">
+                  {/* Category selector pills */}
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-stone-500 uppercase tracking-wider font-bold">Category:</span>
+                    {(['note', 'feedback', 'status_update'] as TaskCommentType[]).map((t) => {
+                      const cfg = COMMENT_TYPE_CONFIG[t];
+                      const Icon = cfg.icon;
+                      const isSelected = commentType === t;
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setCommentType(t)}
+                          className={`flex items-center space-x-1 px-2 py-0.5 border uppercase font-bold transition cursor-pointer ${
+                            isSelected
+                              ? `${cfg.badgeClass} ring-1 ring-black`
+                              : 'bg-stone-50 text-stone-600 border-stone-200 hover:border-stone-400'
+                          }`}
+                        >
+                          <Icon className="w-2.5 h-2.5" />
+                          <span>{cfg.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Author selector */}
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-stone-500 uppercase tracking-wider font-bold">Posting As:</span>
+                    <select
+                      value={commentAuthor}
+                      onChange={(e) => setCommentAuthor(e.target.value)}
+                      className="bg-stone-50 border border-stone-300 px-2 py-0.5 text-[10px] font-mono text-stone-800 focus:outline-hidden focus:border-black cursor-pointer"
+                    >
+                      <option value="Founder A (Tech)">Founder A (Tech)</option>
+                      <option value="Founder B (Product)">Founder B (Product)</option>
+                      <option value="Forge Agent">Forge Agent</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Textarea */}
+                <div className="relative">
+                  <textarea
+                    rows={2}
+                    value={commentContent}
+                    onChange={(e) => setCommentContent(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddComment();
+                      }
+                    }}
+                    placeholder={
+                      commentType === 'feedback'
+                        ? 'Write review feedback, architectural thoughts, or UI recommendations... (Ctrl+Enter)'
+                        : commentType === 'status_update'
+                        ? 'Post a progress milestone, blocker update, or ETA status... (Ctrl+Enter)'
+                        : 'Add a reference note, link, or scratchpad context... (Ctrl+Enter)'
+                    }
+                    className="w-full bg-[#FCFAF7] border border-stone-300 p-2.5 text-xs text-stone-900 placeholder-stone-400 font-sans focus:outline-hidden focus:border-black leading-relaxed resize-y"
+                  />
+                </div>
+
+                {/* Form Submit Footer */}
+                <div className="flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-stone-400">
+                    Tip: Press <kbd className="px-1 py-0.5 bg-stone-100 border border-stone-300 text-stone-700">Ctrl+Enter</kbd> to submit
+                  </span>
+
+                  <button
+                    type="submit"
+                    disabled={!commentContent.trim() || isPostingComment}
+                    className={`flex items-center space-x-1.5 px-4 py-1.5 text-[10px] font-mono uppercase font-bold tracking-wider transition ${
+                      commentContent.trim() && !isPostingComment
+                        ? 'bg-black hover:bg-stone-800 text-white shadow-2xs cursor-pointer'
+                        : 'bg-stone-200 text-stone-400 border border-stone-300 cursor-not-allowed'
+                    }`}
+                  >
+                    <Send className="w-3 h-3" />
+                    <span>{isPostingComment ? 'Posting...' : 'Post Comment'}</span>
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
 

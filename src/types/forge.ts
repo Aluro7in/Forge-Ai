@@ -8,6 +8,16 @@ export interface Subtask {
   createdAt?: string;
 }
 
+export type TaskCommentType = 'note' | 'feedback' | 'status_update';
+
+export interface TaskComment {
+  id: string;
+  author: string;
+  content: string;
+  createdAt: string;
+  type?: TaskCommentType;
+}
+
 export interface Task {
   id: string;
   projectId: string;
@@ -21,6 +31,7 @@ export interface Task {
   dueDate?: string;
   tags: string[];
   subtasks?: Subtask[];
+  comments?: TaskComment[];
   timeSpentSeconds?: number;
   archived?: boolean;
   archivedAt?: string;

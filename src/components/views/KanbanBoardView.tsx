@@ -28,6 +28,7 @@ import {
   Square,
   Maximize2,
   Flame,
+  MessageSquare,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Task, TaskStatus, TaskPriority, Milestone } from '../../types/forge';
@@ -1494,8 +1495,24 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                           {task.assignee}
                                         </span>
                                       </div>
-                                      <div className="font-mono text-stone-800 font-medium shrink-0">
-                                        {task.estimateDays}d
+                                      <div className="flex items-center space-x-2 shrink-0">
+                                        {task.comments && task.comments.length > 0 && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setModalTaskId(task.id);
+                                            }}
+                                            className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 text-[9px] font-mono transition"
+                                            title={`${task.comments.length} note(s) / update(s) (Click to view)`}
+                                          >
+                                            <MessageSquare className="w-2.5 h-2.5 text-stone-500" />
+                                            <span>{task.comments.length}</span>
+                                          </button>
+                                        )}
+                                        <div className="font-mono text-stone-800 font-medium shrink-0">
+                                          {task.estimateDays}d
+                                        </div>
                                       </div>
                                     </div>
 

@@ -2,6 +2,8 @@ import {
   Project,
   Task,
   Subtask,
+  TaskComment,
+  TaskCommentType,
   Milestone,
   Document,
   CanvasCard,
@@ -582,6 +584,7 @@ export class WorkspaceService {
     tags?: string[];
     dueDate?: string;
     subtasks?: Subtask[];
+    comments?: TaskComment[];
     projectId?: string;
   }): ToolResult & { affectedObjects?: AffectedObject[] } {
     if (!input || typeof input.title !== 'string' || !input.title.trim()) {
@@ -634,6 +637,7 @@ export class WorkspaceService {
       dueDate: input.dueDate,
       tags: input.tags || ['WebMCPCreated'],
       subtasks: input.subtasks || [],
+      comments: input.comments || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -659,6 +663,7 @@ export class WorkspaceService {
       tags?: string[];
       dueDate?: string;
       subtasks?: Subtask[];
+      comments?: TaskComment[];
     }>;
     projectId?: string;
   }): ToolResult & { affectedObjects?: AffectedObject[]; tasks?: Task[]; count?: number } {
@@ -731,6 +736,7 @@ export class WorkspaceService {
         dueDate: item.dueDate,
         tags: item.tags || ['WebMCPCreated', 'BulkCreated'],
         subtasks: item.subtasks || [],
+        comments: item.comments || [],
         createdAt: now,
         updatedAt: now,
       };
@@ -765,6 +771,7 @@ export class WorkspaceService {
     tags?: string[];
     dueDate?: string;
     subtasks?: Subtask[];
+    comments?: TaskComment[];
     archived?: boolean;
     archivedAt?: string;
   }): ToolResult & { affectedObjects?: AffectedObject[]; task?: Task } {
@@ -823,6 +830,7 @@ export class WorkspaceService {
             ...(input.estimateDays !== undefined ? { estimateDays: Number(input.estimateDays) } : {}),
             ...(input.dueDate !== undefined ? { dueDate: input.dueDate } : {}),
             ...(input.subtasks !== undefined ? { subtasks: input.subtasks } : {}),
+            ...(input.comments !== undefined ? { comments: input.comments } : {}),
             ...(input.tags !== undefined ? { tags: input.tags } : {}),
             ...(input.archived !== undefined ? { archived: input.archived } : {}),
             ...(input.archivedAt !== undefined ? { archivedAt: input.archivedAt } : {}),
@@ -839,6 +847,119 @@ export class WorkspaceService {
       taskId: input.taskId,
       task: updatedTask,
       affectedObjects: [{ type: 'task', id: input.taskId, title: updatedTask.title }],
+    };
+  }
+
+  public addTaskComment(input: {
+    taskId: string;
+    content: string;
+    author?: string;
+    type?: TaskCommentType;
+  }): ToolResult & { affectedObjects?: AffectedObject[]; comment?: TaskComment; task?: Task } {
+    if (!input || !input.taskId) {
+      return {
+        success: false,
+        error: 'Required field "taskId" is missing.',
+        code: 'VALIDATION_ERROR',
+      };
+    }
+
+    if (!input.content || typeof input.content !== 'string' || !input.content.trim()) {
+      return {
+        success: false,
+        error: 'Comment "content" cannot be empty.',
+        code: 'VALIDATION_ERROR',
+      };
+    }
+
+    const tasks = this.accessor.getTasks();
+    const existing = tasks.find((t) => t.id === input.taskId);
+    if (!existing) {
+      return {
+        success: false,
+        error: `Task with id "${input.taskId}" not found.`,
+        code: 'NOT_FOUND',
+      };
+    }
+
+    const newComment: TaskComment = {
+      id: `comment-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      author: input.author || 'Founder A (Tech)',
+      content: input.content.trim(),
+      type: input.type || 'note',
+      createdAt: new Date().toISOString(),
+    };
+
+    let updatedTask: Task = { ...existing };
+
+    this.accessor.setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id === input.taskId) {
+          const currentComments = t.comments || [];
+          updatedTask = {
+            ...t,
+            comments: [...currentComments, newComment],
+            updatedAt: new Date().toISOString(),
+          };
+          return updatedTask;
+        }
+        return t;
+      })
+    );
+
+    return {
+      success: true,
+      taskId: input.taskId,
+      comment: newComment,
+      task: updatedTask,
+      affectedObjects: [{ type: 'task', id: input.taskId, title: `${updatedTask.title} (Comment added)` }],
+    };
+  }
+
+  public deleteTaskComment(input: {
+    taskId: string;
+    commentId: string;
+  }): ToolResult & { affectedObjects?: AffectedObject[]; task?: Task } {
+    if (!input || !input.taskId || !input.commentId) {
+      return {
+        success: false,
+        error: 'Required fields "taskId" and "commentId" must be provided.',
+        code: 'VALIDATION_ERROR',
+      };
+    }
+
+    const tasks = this.accessor.getTasks();
+    const existing = tasks.find((t) => t.id === input.taskId);
+    if (!existing) {
+      return {
+        success: false,
+        error: `Task with id "${input.taskId}" not found.`,
+        code: 'NOT_FOUND',
+      };
+    }
+
+    let updatedTask: Task = { ...existing };
+
+    this.accessor.setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id === input.taskId) {
+          const currentComments = t.comments || [];
+          updatedTask = {
+            ...t,
+            comments: currentComments.filter((c) => c.id !== input.commentId),
+            updatedAt: new Date().toISOString(),
+          };
+          return updatedTask;
+        }
+        return t;
+      })
+    );
+
+    return {
+      success: true,
+      taskId: input.taskId,
+      task: updatedTask,
+      affectedObjects: [{ type: 'task', id: input.taskId, title: `${updatedTask.title} (Comment removed)` }],
     };
   }
 

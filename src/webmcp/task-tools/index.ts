@@ -108,6 +108,7 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
           estimateDays: { type: 'number', description: 'Updated estimate in days' },
           dueDate: { type: 'string', description: 'Updated due date' },
           subtasks: { type: 'array', description: 'Updated subtasks checklist array' },
+          comments: { type: 'array', description: 'Updated task comments list' },
           tags: { type: 'array', items: { type: 'string' }, description: 'Updated tags' },
           archived: { type: 'boolean', description: 'Whether the task is archived from active boards' },
           archivedAt: { type: 'string', description: 'Timestamp when the task was archived' },
@@ -129,6 +130,7 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
             estimateDays: { type: 'number' },
             dueDate: { type: 'string' },
             subtasks: { type: 'array' },
+            comments: { type: 'array' },
             tags: { type: 'array' },
             archived: { type: 'boolean' },
             archivedAt: { type: 'string' },
@@ -277,6 +279,37 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
           return validationError(validation.error!);
         }
         return service.archiveTask(input);
+      },
+    },
+    {
+      name: 'add_task_comment',
+      description: 'Add a note, feedback, or status update comment to a specific task in the workspace.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string', description: 'ID of the target task' },
+          content: { type: 'string', description: 'Comment or note content' },
+          author: { type: 'string', description: 'Author of the comment (e.g. Founder A (Tech), Founder B (Product), Forge Agent)' },
+          type: { type: 'string', enum: ['note', 'feedback', 'status_update'], description: 'Comment category type' },
+        },
+        required: ['taskId', 'content'],
+      },
+      execute: async (input) => {
+        const schema = {
+          type: 'object',
+          properties: {
+            taskId: { type: 'string' },
+            content: { type: 'string' },
+            author: { type: 'string' },
+            type: { type: 'string', enum: ['note', 'feedback', 'status_update'] },
+          },
+          required: ['taskId', 'content'],
+        };
+        const validation = validateSchema(schema, input);
+        if (!validation.valid) {
+          return validationError(validation.error!);
+        }
+        return service.addTaskComment(input);
       },
     },
   ];
