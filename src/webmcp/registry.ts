@@ -1,6 +1,6 @@
 import { WebMCPToolDefinition, AgentAction, AffectedObject } from '../types/forge';
 import { WorkspaceService } from '../services/workspaceService';
-import { notifyToast } from '../context/ToastContext';
+import { notifyToast, notifyChangesSaved } from '../context/ToastContext';
 import { createProjectTools } from './project-tools';
 import { createTaskTools } from './task-tools';
 import { createPlanningTools } from './planning-tools';
@@ -32,7 +32,7 @@ export const WEBMCP_TOOL_CATEGORIES: ToolCategory[] = [
     id: 'task-tools',
     name: 'Task Tools',
     description: 'Creation, bulk batch creation, attribute updates, Kanban column movements, and deletion of project tasks.',
-    toolNames: ['create_task', 'bulk_apply_tasks', 'update_task', 'move_task', 'delete_task'],
+    toolNames: ['create_task', 'bulk_apply_tasks', 'update_task', 'log_task_time', 'move_task', 'reorder_tasks', 'delete_task'],
   },
   {
     id: 'planning-tools',
@@ -125,6 +125,46 @@ export function buildAllWebMCPTools(
               title: `Action Failed: ${tool.name}`,
               message: errorMsg,
             });
+          } else {
+            // Reassure user of persistent state whenever a task or document is modified
+            const taskTools = ['create_task', 'bulk_apply_tasks', 'update_task', 'move_task', 'reorder_tasks', 'delete_task'];
+            const docTools = ['create_document', 'update_document'];
+
+            if (taskTools.includes(tool.name)) {
+              const taskTitle =
+                result?.task?.title ||
+                input?.title ||
+                (input?.taskId ? `Task #${String(input.taskId).slice(-4)}` : 'Task');
+
+              let actionDesc = 'updated and persisted';
+              if (tool.name === 'create_task') {
+                actionDesc = 'created and persisted';
+              } else if (tool.name === 'bulk_apply_tasks') {
+                const count = result?.tasks?.length || 'Multiple';
+                actionDesc = `${count} tasks created and persisted`;
+              } else if (tool.name === 'delete_task') {
+                actionDesc = 'removed from workspace';
+              } else if (tool.name === 'reorder_tasks') {
+                const targetCol = input?.targetStatus ? String(input.targetStatus).replace('_', ' ') : 'column';
+                actionDesc = `reordered in ${targetCol}`;
+              } else if (tool.name === 'move_task') {
+                const targetCol = input?.newStatus ? String(input.newStatus).replace('_', ' ') : 'column';
+                actionDesc = `moved to ${targetCol}`;
+              }
+
+              notifyChangesSaved({
+                entity: 'task',
+                name: taskTitle,
+                message: `Task "${taskTitle}" ${actionDesc}.`,
+              });
+            } else if (docTools.includes(tool.name)) {
+              const docTitle = result?.document?.title || input?.title || 'Document';
+              notifyChangesSaved({
+                entity: 'document',
+                name: docTitle,
+                message: `Document "${docTitle}" saved and persisted to workspace.`,
+              });
+            }
           }
 
           return result;

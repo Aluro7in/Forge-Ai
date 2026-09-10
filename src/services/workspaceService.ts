@@ -754,10 +754,12 @@ export class WorkspaceService {
     status?: TaskStatus;
     priority?: TaskPriority;
     assignee?: string;
+    milestoneId?: string;
+    timeSpentSeconds?: number;
     estimateDays?: number;
     tags?: string[];
     dueDate?: string;
-  }): ToolResult & { affectedObjects?: AffectedObject[] } {
+  }): ToolResult & { affectedObjects?: AffectedObject[]; task?: Task } {
     if (!input || !input.taskId || typeof input.taskId !== 'string') {
       return {
         success: false,
@@ -808,6 +810,8 @@ export class WorkspaceService {
             ...(input.status !== undefined ? { status: input.status } : {}),
             ...(input.priority !== undefined ? { priority: input.priority } : {}),
             ...(input.assignee !== undefined ? { assignee: input.assignee } : {}),
+            ...(input.milestoneId !== undefined ? { milestoneId: input.milestoneId } : {}),
+            ...(input.timeSpentSeconds !== undefined ? { timeSpentSeconds: Math.max(0, Number(input.timeSpentSeconds)) } : {}),
             ...(input.estimateDays !== undefined ? { estimateDays: Number(input.estimateDays) } : {}),
             ...(input.dueDate !== undefined ? { dueDate: input.dueDate } : {}),
             ...(input.tags !== undefined ? { tags: input.tags } : {}),
@@ -822,6 +826,54 @@ export class WorkspaceService {
     return {
       success: true,
       taskId: input.taskId,
+      task: updatedTask,
+      affectedObjects: [{ type: 'task', id: input.taskId, title: updatedTask.title }],
+    };
+  }
+
+  public logTaskTime(input: {
+    taskId: string;
+    secondsToAdd?: number;
+    totalSeconds?: number;
+  }): ToolResult & { affectedObjects?: AffectedObject[]; task?: Task; timeSpentSeconds?: number } {
+    if (!input || !input.taskId) {
+      return {
+        success: false,
+        error: 'Required field "taskId" is missing.',
+        code: 'VALIDATION_ERROR',
+      };
+    }
+
+    const tasks = this.accessor.getTasks();
+    const existing = tasks.find((t) => t.id === input.taskId);
+    if (!existing) {
+      return {
+        success: false,
+        error: `Task with id "${input.taskId}" not found.`,
+        code: 'NOT_FOUND',
+      };
+    }
+
+    const currentSeconds = existing.timeSpentSeconds || 0;
+    const newSeconds =
+      input.totalSeconds !== undefined
+        ? Math.max(0, Math.round(Number(input.totalSeconds)))
+        : Math.max(0, Math.round(currentSeconds + Number(input.secondsToAdd || 0)));
+
+    let updatedTask: Task = {
+      ...existing,
+      timeSpentSeconds: newSeconds,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.accessor.setTasks((prev) =>
+      prev.map((t) => (t.id === input.taskId ? updatedTask : t))
+    );
+
+    return {
+      success: true,
+      taskId: input.taskId,
+      timeSpentSeconds: newSeconds,
       task: updatedTask,
       affectedObjects: [{ type: 'task', id: input.taskId, title: updatedTask.title }],
     };
@@ -872,6 +924,94 @@ export class WorkspaceService {
       status: input.newStatus,
       task: updatedTask,
       affectedObjects: [{ type: 'task', id: input.taskId, title: updatedTask.title }],
+    };
+  }
+
+  public reorderTasks(input: {
+    taskId: string;
+    targetStatus: TaskStatus;
+    targetIndex: number;
+  }): ToolResult & { affectedObjects?: AffectedObject[]; task?: Task; tasks?: Task[] } {
+    if (!input || !input.taskId) {
+      return {
+        success: false,
+        error: 'Required argument "taskId" is missing.',
+        code: 'VALIDATION_ERROR',
+      };
+    }
+
+    const validStatuses: TaskStatus[] = ['todo', 'in_progress', 'review', 'done'];
+    if (!input.targetStatus || !validStatuses.includes(input.targetStatus)) {
+      return {
+        success: false,
+        error: `Invalid or missing "targetStatus". Allowed values: ${validStatuses.join(', ')}`,
+        code: 'INVALID_ARGUMENT',
+      };
+    }
+
+    const allTasks = this.accessor.getTasks();
+    const movingTask = allTasks.find((t) => t.id === input.taskId);
+    if (!movingTask) {
+      return {
+        success: false,
+        error: `Task with id "${input.taskId}" not found.`,
+        code: 'NOT_FOUND',
+      };
+    }
+
+    this.takeSnapshot(`Reorder task "${movingTask.title}" in ${input.targetStatus}`);
+
+    const updatedMovingTask: Task = {
+      ...movingTask,
+      status: input.targetStatus,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Remove the moving task first
+    const withoutMoving = allTasks.filter((t) => t.id !== input.taskId);
+    const targetColTasks = withoutMoving.filter((t) => t.status === input.targetStatus);
+
+    const safeTargetIndex = Math.max(0, Math.min(Number(input.targetIndex) || 0, targetColTasks.length));
+
+    let finalTasks: Task[];
+    if (targetColTasks.length === 0) {
+      finalTasks = [...withoutMoving, updatedMovingTask];
+    } else if (safeTargetIndex === 0) {
+      const firstColTask = targetColTasks[0];
+      const insertPos = withoutMoving.findIndex((t) => t.id === firstColTask.id);
+      finalTasks = [
+        ...withoutMoving.slice(0, insertPos),
+        updatedMovingTask,
+        ...withoutMoving.slice(insertPos),
+      ];
+    } else if (safeTargetIndex >= targetColTasks.length) {
+      const lastColTask = targetColTasks[targetColTasks.length - 1];
+      const insertPos = withoutMoving.findIndex((t) => t.id === lastColTask.id);
+      finalTasks = [
+        ...withoutMoving.slice(0, insertPos + 1),
+        updatedMovingTask,
+        ...withoutMoving.slice(insertPos + 1),
+      ];
+    } else {
+      const refTask = targetColTasks[safeTargetIndex];
+      const insertPos = withoutMoving.findIndex((t) => t.id === refTask.id);
+      finalTasks = [
+        ...withoutMoving.slice(0, insertPos),
+        updatedMovingTask,
+        ...withoutMoving.slice(insertPos),
+      ];
+    }
+
+    this.accessor.setTasks(finalTasks);
+
+    return {
+      success: true,
+      taskId: input.taskId,
+      targetStatus: input.targetStatus,
+      targetIndex: safeTargetIndex,
+      task: updatedMovingTask,
+      tasks: finalTasks,
+      affectedObjects: [{ type: 'task', id: input.taskId, title: updatedMovingTask.title }],
     };
   }
 

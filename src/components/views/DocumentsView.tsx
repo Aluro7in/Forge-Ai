@@ -9,10 +9,12 @@ import {
   Code2,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
+import { useToast } from '../../context/ToastContext';
 import { Document } from '../../types/forge';
 
 export const DocumentsView: React.FC = () => {
   const { documents, executeToolByName } = useWorkspace();
+  const { showChangesSaved } = useToast();
   const [selectedDocId, setSelectedDocId] = useState<string>(documents[0]?.id || '');
   const [content, setContent] = useState<string>(documents[0]?.content || '');
   const [isSaved, setIsSaved] = useState(false);
@@ -32,6 +34,11 @@ export const DocumentsView: React.FC = () => {
       content,
     });
     setIsSaved(true);
+    showChangesSaved({
+      entity: 'document',
+      name: selectedDoc.title,
+      message: `Document "${selectedDoc.title}" saved and persisted to workspace memory.`,
+    });
     setTimeout(() => setIsSaved(false), 2500);
   };
 
@@ -41,9 +48,14 @@ export const DocumentsView: React.FC = () => {
       title,
       content: `# ${title}\n\nDrafted with Forge WebMCP Agent.`,
     });
-    if (res.document) {
+    if (res?.document) {
       setSelectedDocId(res.document.id);
       setContent(res.document.content);
+      showChangesSaved({
+        entity: 'document',
+        name: res.document.title,
+        message: `New document "${res.document.title}" created and persisted.`,
+      });
     }
   };
 

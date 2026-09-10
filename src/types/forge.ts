@@ -13,6 +13,7 @@ export interface Task {
   estimateDays: number;
   dueDate?: string;
   tags: string[];
+  timeSpentSeconds?: number;
   createdAt: string;
   updatedAt: string;
 }

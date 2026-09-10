@@ -20,6 +20,7 @@ import {
 import { initializeWebMCP, subscribeWebMCP } from '../webmcp/context';
 import { WorkspaceService, WorkspaceStateAccessor } from '../services/workspaceService';
 import { buildAllWebMCPTools } from '../webmcp/registry';
+import { notifyChangesSaved } from './ToastContext';
 
 interface WorkspaceContextType {
   project: Project;
@@ -89,6 +90,54 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       snapshots,
     };
   }, [project, tasks, milestones, documents, cards, proposals, activeProposal, snapshots]);
+
+  // Automated persistence reassurance: automatically trigger 'Changes saved' toast on user/tool modifications
+  const prevTasksRef = useRef<Task[]>(INITIAL_TASKS);
+  const prevDocsRef = useRef<Document[]>(INITIAL_DOCUMENTS);
+  const isInitialMountRef = useRef<boolean>(true);
+  const isResettingSeedRef = useRef<boolean>(false);
+  const lastAutoSaveToastTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      prevTasksRef.current = tasks;
+      prevDocsRef.current = documents;
+      return;
+    }
+
+    if (isResettingSeedRef.current) {
+      prevTasksRef.current = tasks;
+      prevDocsRef.current = documents;
+      return;
+    }
+
+    const now = Date.now();
+
+    // Check if tasks were modified
+    if (tasks !== prevTasksRef.current) {
+      prevTasksRef.current = tasks;
+      if (now - lastAutoSaveToastTimeRef.current > 400) {
+        lastAutoSaveToastTimeRef.current = now;
+        notifyChangesSaved({
+          entity: 'task',
+          message: 'Task modifications saved and persisted to workspace.',
+        });
+      }
+    }
+
+    // Check if documents were modified
+    if (documents !== prevDocsRef.current) {
+      prevDocsRef.current = documents;
+      if (now - lastAutoSaveToastTimeRef.current > 400) {
+        lastAutoSaveToastTimeRef.current = now;
+        notifyChangesSaved({
+          entity: 'document',
+          message: 'Document modifications saved and persisted to workspace.',
+        });
+      }
+    }
+  }, [tasks, documents]);
 
   // Instantiate application service layer connecting directly to state
   const workspaceService = useMemo(() => {
@@ -187,6 +236,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   );
 
   const resetToInitialSeed = useCallback(() => {
+    isResettingSeedRef.current = true;
     workspaceService.takeSnapshot('Before reset to initial template');
     setProject(JSON.parse(JSON.stringify(INITIAL_PROJECT)));
     setTasks(JSON.parse(JSON.stringify(INITIAL_TASKS)));
@@ -195,6 +245,9 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCards(JSON.parse(JSON.stringify(INITIAL_CARDS)));
     setProposals([]);
     setActiveProposal(null);
+    setTimeout(() => {
+      isResettingSeedRef.current = false;
+    }, 150);
   }, [workspaceService]);
 
   const executeToolByName = useCallback(async (name: string, input: any) => {

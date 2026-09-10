@@ -9,9 +9,17 @@ export interface ToastItem {
   timestamp: number;
 }
 
+export interface ChangesSavedOptions {
+  entity?: 'task' | 'document' | 'milestone' | 'workspace' | string;
+  name?: string;
+  message?: string;
+  durationMs?: number;
+}
+
 interface ToastContextType {
   toasts: ToastItem[];
   showToast: (toast: Omit<ToastItem, 'id' | 'timestamp'>) => string;
+  showChangesSaved: (options?: ChangesSavedOptions) => string;
   dismissToast: (id: string) => void;
   clearToasts: () => void;
 }
@@ -29,6 +37,28 @@ export function notifyToast(toast: Omit<ToastItem, 'id' | 'timestamp'>): void {
     } catch {
       // ignore
     }
+  });
+}
+
+/**
+ * Automatically triggers a standardized 'Changes saved' notification
+ * to reassure users of persistent state synchronization.
+ */
+export function notifyChangesSaved(options?: ChangesSavedOptions): void {
+  const entityLabel = options?.entity
+    ? options.entity.charAt(0).toUpperCase() + options.entity.slice(1)
+    : 'Item';
+  const message =
+    options?.message ||
+    (options?.name
+      ? `${entityLabel} "${options.name}" persisted to workspace.`
+      : 'All modifications have been safely persisted.');
+
+  notifyToast({
+    type: 'success',
+    title: 'Changes saved',
+    message,
+    durationMs: options?.durationMs ?? 3000,
   });
 }
 
@@ -63,6 +93,27 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [dismissToast]
   );
 
+  const showChangesSaved = useCallback(
+    (options?: ChangesSavedOptions): string => {
+      const entityLabel = options?.entity
+        ? options.entity.charAt(0).toUpperCase() + options.entity.slice(1)
+        : 'Item';
+      const message =
+        options?.message ||
+        (options?.name
+          ? `${entityLabel} "${options.name}" persisted to workspace.`
+          : 'All modifications have been safely persisted.');
+
+      return showToast({
+        type: 'success',
+        title: 'Changes saved',
+        message,
+        durationMs: options?.durationMs ?? 3000,
+      });
+    },
+    [showToast]
+  );
+
   const clearToasts = useCallback(() => {
     setToasts([]);
   }, []);
@@ -79,7 +130,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [showToast]);
 
   return (
-    <ToastContext.Provider value={{ toasts, showToast, dismissToast, clearToasts }}>
+    <ToastContext.Provider value={{ toasts, showToast, showChangesSaved, dismissToast, clearToasts }}>
       {children}
     </ToastContext.Provider>
   );

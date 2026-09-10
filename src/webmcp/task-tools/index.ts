@@ -101,6 +101,8 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
           status: { type: 'string', enum: ['todo', 'in_progress', 'review', 'done'], description: 'Updated status' },
           priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'Updated priority' },
           assignee: { type: 'string', description: 'Updated assignee' },
+          milestoneId: { type: 'string', description: 'Updated milestone ID' },
+          timeSpentSeconds: { type: 'number', description: 'Total time spent in seconds' },
           estimateDays: { type: 'number', description: 'Updated estimate in days' },
           dueDate: { type: 'string', description: 'Updated due date' },
           tags: { type: 'array', items: { type: 'string' }, description: 'Updated tags' },
@@ -117,6 +119,8 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
             status: { type: 'string', enum: ['todo', 'in_progress', 'review', 'done'] },
             priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'] },
             assignee: { type: 'string' },
+            milestoneId: { type: 'string' },
+            timeSpentSeconds: { type: 'number' },
             estimateDays: { type: 'number' },
             dueDate: { type: 'string' },
             tags: { type: 'array' },
@@ -128,6 +132,35 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
           return validationError(validation.error!);
         }
         return service.updateTask(input);
+      },
+    },
+    {
+      name: 'log_task_time',
+      description: 'Log time spent on a specific task in seconds or adjust total time logged.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string', description: 'ID of the task' },
+          secondsToAdd: { type: 'number', description: 'Seconds to add to logged time' },
+          totalSeconds: { type: 'number', description: 'Explicit total seconds spent' },
+        },
+        required: ['taskId'],
+      },
+      execute: async (input) => {
+        const schema = {
+          type: 'object',
+          properties: {
+            taskId: { type: 'string' },
+            secondsToAdd: { type: 'number' },
+            totalSeconds: { type: 'number' },
+          },
+          required: ['taskId'],
+        };
+        const validation = validateSchema(schema, input);
+        if (!validation.valid) {
+          return validationError(validation.error!);
+        }
+        return service.logTaskTime(input);
       },
     },
     {
@@ -155,6 +188,35 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
           return validationError(validation.error!);
         }
         return service.moveTask(input);
+      },
+    },
+    {
+      name: 'reorder_tasks',
+      description: 'Reorder a task within its current column or across Kanban columns at a specific target index.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string', description: 'ID of the task to reorder' },
+          targetStatus: { type: 'string', enum: ['todo', 'in_progress', 'review', 'done'], description: 'Target column status' },
+          targetIndex: { type: 'number', description: 'Zero-based target index within the target column' },
+        },
+        required: ['taskId', 'targetStatus', 'targetIndex'],
+      },
+      execute: async (input) => {
+        const schema = {
+          type: 'object',
+          properties: {
+            taskId: { type: 'string' },
+            targetStatus: { type: 'string', enum: ['todo', 'in_progress', 'review', 'done'] },
+            targetIndex: { type: 'number' },
+          },
+          required: ['taskId', 'targetStatus', 'targetIndex'],
+        };
+        const validation = validateSchema(schema, input);
+        if (!validation.valid) {
+          return validationError(validation.error!);
+        }
+        return service.reorderTasks(input);
       },
     },
     {
