@@ -32,7 +32,7 @@ export const WEBMCP_TOOL_CATEGORIES: ToolCategory[] = [
     id: 'task-tools',
     name: 'Task Tools',
     description: 'Creation, bulk batch creation, attribute updates, Kanban column movements, and deletion of project tasks.',
-    toolNames: ['create_task', 'bulk_apply_tasks', 'update_task', 'log_task_time', 'move_task', 'reorder_tasks', 'delete_task'],
+    toolNames: ['create_task', 'bulk_apply_tasks', 'update_task', 'log_task_time', 'move_task', 'reorder_tasks', 'delete_task', 'archive_task'],
   },
   {
     id: 'planning-tools',

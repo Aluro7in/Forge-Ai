@@ -759,6 +759,8 @@ export class WorkspaceService {
     estimateDays?: number;
     tags?: string[];
     dueDate?: string;
+    archived?: boolean;
+    archivedAt?: string;
   }): ToolResult & { affectedObjects?: AffectedObject[]; task?: Task } {
     if (!input || !input.taskId || typeof input.taskId !== 'string') {
       return {
@@ -815,6 +817,8 @@ export class WorkspaceService {
             ...(input.estimateDays !== undefined ? { estimateDays: Number(input.estimateDays) } : {}),
             ...(input.dueDate !== undefined ? { dueDate: input.dueDate } : {}),
             ...(input.tags !== undefined ? { tags: input.tags } : {}),
+            ...(input.archived !== undefined ? { archived: input.archived } : {}),
+            ...(input.archivedAt !== undefined ? { archivedAt: input.archivedAt } : {}),
             updatedAt: new Date().toISOString(),
           };
           return updatedTask;
@@ -1041,6 +1045,53 @@ export class WorkspaceService {
       success: true,
       deletedTaskId: input.taskId,
       affectedObjects: [{ type: 'task', id: input.taskId, title: existing.title }],
+    };
+  }
+
+  public archiveTask(input: {
+    taskId: string;
+    unarchive?: boolean;
+  }): ToolResult & { affectedObjects?: AffectedObject[]; task?: Task; archived?: boolean } {
+    if (!input || !input.taskId || typeof input.taskId !== 'string') {
+      return {
+        success: false,
+        error: 'Required argument "taskId" is missing.',
+        code: 'VALIDATION_ERROR',
+      };
+    }
+
+    const tasks = this.accessor.getTasks();
+    const existing = tasks.find((t) => t.id === input.taskId);
+    if (!existing) {
+      return {
+        success: false,
+        error: `Task with id "${input.taskId}" not found in current project.`,
+        code: 'NOT_FOUND',
+      };
+    }
+
+    const shouldArchive = input.unarchive !== true;
+    const actionLabel = shouldArchive ? 'Archive' : 'Restore';
+    this.takeSnapshot(`${actionLabel} task: ${existing.title}`);
+
+    let updatedTask: Task = {
+      ...existing,
+      archived: shouldArchive,
+      archivedAt: shouldArchive ? new Date().toISOString() : undefined,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.accessor.setTasks((prev) =>
+      prev.map((t) => (t.id === input.taskId ? updatedTask : t))
+    );
+
+    return {
+      success: true,
+      taskId: input.taskId,
+      archived: shouldArchive,
+      task: updatedTask,
+      message: `Task "${existing.title}" successfully ${shouldArchive ? 'archived' : 'restored to active board'}.`,
+      affectedObjects: [{ type: 'task', id: input.taskId, title: updatedTask.title }],
     };
   }
 

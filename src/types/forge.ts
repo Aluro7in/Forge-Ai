@@ -14,6 +14,8 @@ export interface Task {
   dueDate?: string;
   tags: string[];
   timeSpentSeconds?: number;
+  archived?: boolean;
+  archivedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

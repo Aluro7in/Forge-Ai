@@ -106,6 +106,8 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
           estimateDays: { type: 'number', description: 'Updated estimate in days' },
           dueDate: { type: 'string', description: 'Updated due date' },
           tags: { type: 'array', items: { type: 'string' }, description: 'Updated tags' },
+          archived: { type: 'boolean', description: 'Whether the task is archived from active boards' },
+          archivedAt: { type: 'string', description: 'Timestamp when the task was archived' },
         },
         required: ['taskId'],
       },
@@ -124,6 +126,8 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
             estimateDays: { type: 'number' },
             dueDate: { type: 'string' },
             tags: { type: 'array' },
+            archived: { type: 'boolean' },
+            archivedAt: { type: 'string' },
           },
           required: ['taskId'],
         };
@@ -242,6 +246,33 @@ export function createTaskTools(service: WorkspaceService): WebMCPToolDefinition
           return validationError(validation.error!);
         }
         return service.deleteTask(input);
+      },
+    },
+    {
+      name: 'archive_task',
+      description: 'Archive or restore a completed task from the active board view into an archive state to keep the workspace tidy.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string', description: 'ID of the task to archive or restore' },
+          unarchive: { type: 'boolean', description: 'Set to true to unarchive/restore the task back to the active board' },
+        },
+        required: ['taskId'],
+      },
+      execute: async (input) => {
+        const schema = {
+          type: 'object',
+          properties: {
+            taskId: { type: 'string' },
+            unarchive: { type: 'boolean' },
+          },
+          required: ['taskId'],
+        };
+        const validation = validateSchema(schema, input);
+        if (!validation.valid) {
+          return validationError(validation.error!);
+        }
+        return service.archiveTask(input);
       },
     },
   ];

@@ -9,6 +9,8 @@ import {
   User,
   Tag,
   Plus,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Task, TaskPriority, TaskStatus } from '../../types/forge';
@@ -22,9 +24,17 @@ export const TaskListView: React.FC = () => {
   const filteredTasks = tasks.filter((t) => {
     const matchesSearch =
       t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.assignee.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
+      (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      t.assignee.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.id.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus =
+      statusFilter === 'all'
+        ? !t.archived
+        : statusFilter === 'archived'
+        ? !!t.archived
+        : !t.archived && t.status === statusFilter;
+
     const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter;
     return matchesSearch && matchesStatus && matchesPriority;
   });
@@ -32,6 +42,14 @@ export const TaskListView: React.FC = () => {
   const handleToggleStatus = async (task: Task) => {
     const newStatus: TaskStatus = task.status === 'done' ? 'todo' : 'done';
     await executeToolByName('update_task', { taskId: task.id, status: newStatus });
+  };
+
+  const handleArchiveToggle = async (task: Task) => {
+    if (task.archived) {
+      await executeToolByName('archive_task', { taskId: task.id, unarchive: true });
+    } else {
+      await executeToolByName('archive_task', { taskId: task.id });
+    }
   };
 
   const handleDelete = async (taskId: string) => {
@@ -70,11 +88,12 @@ export const TaskListView: React.FC = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-white border border-stone-300 px-2.5 py-1.5 text-[11px] font-mono uppercase text-stone-700 focus:outline-hidden focus:border-black"
           >
-            <option value="all">All Statuses</option>
+            <option value="all">Active Tasks</option>
             <option value="todo">To Do</option>
             <option value="in_progress">In Progress</option>
             <option value="review">Review</option>
             <option value="done">Completed</option>
+            <option value="archived">Archived</option>
           </select>
 
           {/* Priority Filter */}
@@ -196,13 +215,26 @@ export const TaskListView: React.FC = () => {
                     </td>
 
                     <td className="py-3.5 px-4 text-center">
-                      <button
-                        onClick={() => handleDelete(task.id)}
-                        className="text-stone-400 hover:text-black transition p-1"
-                        title="Delete task via WebMCP"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center justify-center space-x-1">
+                        <button
+                          onClick={() => handleArchiveToggle(task)}
+                          className="text-stone-400 hover:text-black transition p-1"
+                          title={task.archived ? 'Restore to active board' : 'Archive task to keep workspace tidy'}
+                        >
+                          {task.archived ? (
+                            <ArchiveRestore className="w-3.5 h-3.5 text-black" />
+                          ) : (
+                            <Archive className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(task.id)}
+                          className="text-stone-400 hover:text-black transition p-1"
+                          title="Delete task via WebMCP"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -17,6 +17,11 @@ import {
   Sparkles,
   Play,
   Pause,
+  Archive,
+  ArchiveRestore,
+  RotateCcw,
+  Search,
+  CheckCircle2,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Task, TaskStatus, TaskPriority, Milestone } from '../../types/forge';
@@ -43,12 +48,21 @@ interface KanbanBoardViewProps {
 export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytics }) => {
   const { tasks, setTasks, milestones, executeToolByName } = useWorkspace();
 
+  // Active vs Archived Tasks Segregation
+  const activeTasks = useMemo(() => tasks.filter((t) => !t.archived), [tasks]);
+  const archivedTasks = useMemo(() => tasks.filter((t) => !!t.archived), [tasks]);
+
   // Swimlane View Mode State
   const [swimlaneMode, setSwimlaneMode] = useState<SwimlaneMode>('none');
   const [collapsedSwimlanes, setCollapsedSwimlanes] = useState<Record<string, boolean>>({});
 
   // Active Timer Tracker State (only one active timer at a time)
   const [activeTimerTaskId, setActiveTimerTaskId] = useState<string | null>(null);
+
+  // Archive Drawer / Modal State
+  const [isArchivedModalOpen, setIsArchivedModalOpen] = useState(false);
+  const [archivedSearchQuery, setArchivedSearchQuery] = useState('');
+  const [isArchivingAll, setIsArchivingAll] = useState(false);
 
   // Quick Task Creation State
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -99,7 +113,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
     { id: 'done', title: 'Completed', color: 'border-emerald-500/70' },
   ];
 
-  // Build Swimlane Definitions based on current mode
+  // Build Swimlane Definitions based on current mode using active tasks
   const swimlanes: SwimlaneDef[] = useMemo(() => {
     if (swimlaneMode === 'phase') {
       const list: SwimlaneDef[] = milestones.map((m) => ({
@@ -118,7 +132,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
       }));
 
       // Add Unassigned / General Tasks swimlane if there are unlinked tasks
-      const unassignedTasks = tasks.filter(
+      const unassignedTasks = activeTasks.filter(
         (t) => !t.milestoneId || !milestones.some((m) => m.id === t.milestoneId)
       );
       if (unassignedTasks.length > 0 || list.length === 0) {
@@ -197,7 +211,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
       ];
     }
 
-    // Default: 'none' -> Single unified swimlane containing all tasks
+    // Default: 'none' -> Single unified swimlane containing all active tasks
     return [
       {
         id: 'all',
@@ -206,7 +220,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
         defaultOpen: true,
       },
     ];
-  }, [swimlaneMode, milestones, tasks]);
+  }, [swimlaneMode, milestones, activeTasks]);
 
   const toggleSwimlaneCollapse = (swimlaneId: string) => {
     setCollapsedSwimlanes((prev) => ({
@@ -248,6 +262,37 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
       setNewTaskPriority(swimlane.id as TaskPriority);
     }
     setIsAddingTask(true);
+  };
+
+  // Archive Task Handlers
+  const handleArchiveTask = async (taskId: string) => {
+    // If timer is running on this task, stop it
+    if (activeTimerTaskId === taskId) {
+      setActiveTimerTaskId(null);
+    }
+    await executeToolByName('archive_task', { taskId });
+  };
+
+  const handleRestoreTask = async (taskId: string) => {
+    await executeToolByName('archive_task', { taskId, unarchive: true });
+  };
+
+  const handleArchiveAllDone = async (doneTasks: Task[]) => {
+    if (doneTasks.length === 0) return;
+    setIsArchivingAll(true);
+    try {
+      for (const t of doneTasks) {
+        await executeToolByName('archive_task', { taskId: t.id });
+      }
+    } finally {
+      setIsArchivingAll(false);
+    }
+  };
+
+  const handleRestoreAllArchived = async () => {
+    for (const t of archivedTasks) {
+      await executeToolByName('archive_task', { taskId: t.id, unarchive: true });
+    }
   };
 
   const handleStartInlineEdit = (task: Task) => {
@@ -430,12 +475,12 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
       updatedAt: new Date().toISOString(),
     };
 
-    // Optimistically update task order in local state for fluid 60fps interaction
+    // Optimistically update task order in local state for active tasks
     const withoutMoving = tasks.filter((t) => t.id !== droppedTaskId);
     const targetColTasksWithoutMoving = withoutMoving.filter((t) => {
       const matchesCol = t.status === targetColId;
       const matchesSwimlane = swimlaneMode !== 'none' ? targetSwimlane.filter(t) : true;
-      return matchesCol && matchesSwimlane;
+      return matchesCol && matchesSwimlane && !t.archived;
     });
 
     const safeTargetIndex = Math.max(0, Math.min(targetIndex, targetColTasksWithoutMoving.length));
@@ -522,7 +567,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
     const colTasksWithoutMoving = tasks.filter((t) => {
       const matchesCol = t.status === colId;
       const matchesSwimlane = swimlaneMode !== 'none' ? targetSwimlane.filter(t) : true;
-      return matchesCol && matchesSwimlane && t.id !== draggedTaskId;
+      return matchesCol && matchesSwimlane && !t.archived && t.id !== draggedTaskId;
     });
     executeTaskReorder(targetSwimlane, colId, colTasksWithoutMoving.length);
   };
@@ -546,6 +591,18 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
     return `${h}h`;
   };
 
+  const filteredArchivedTasks = useMemo(() => {
+    const query = archivedSearchQuery.toLowerCase().trim();
+    if (!query) return archivedTasks;
+    return archivedTasks.filter(
+      (t) =>
+        t.title.toLowerCase().includes(query) ||
+        (t.description && t.description.toLowerCase().includes(query)) ||
+        t.assignee.toLowerCase().includes(query) ||
+        t.id.toLowerCase().includes(query)
+    );
+  }, [archivedTasks, archivedSearchQuery]);
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
       {/* Top action bar */}
@@ -555,11 +612,12 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
             Hero Roadmap
           </h1>
           <p className="text-xs uppercase tracking-widest text-stone-500 font-sans">
-            Current Workspace Snapshot • 2 Founders • 14 Days
+            Active Workspace • {activeTasks.length} Active Tasks
+            {archivedTasks.length > 0 && ` • ${archivedTasks.length} Archived`}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Swimlane Grouping Segmented Selector */}
           <div className="flex items-center space-x-1 bg-stone-100 p-1 border border-stone-300">
             <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider px-2 py-0.5 hidden md:inline">
@@ -573,7 +631,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                   ? 'bg-black text-white font-bold shadow-2xs'
                   : 'text-stone-600 hover:text-black hover:bg-stone-200/70'
               }`}
-              title="Standard Kanban columns with all tasks"
+              title="Standard Kanban columns with all active tasks"
             >
               Standard
             </button>
@@ -605,6 +663,22 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
             </button>
           </div>
 
+          {/* Archived Tasks Drawer/Modal Trigger */}
+          <button
+            type="button"
+            onClick={() => setIsArchivedModalOpen(true)}
+            className={`flex items-center space-x-1.5 px-3 py-2 border text-[10px] uppercase font-bold tracking-wider transition shrink-0 ${
+              archivedTasks.length > 0
+                ? 'border-stone-400 bg-stone-100 hover:bg-stone-200 text-stone-900 shadow-2xs'
+                : 'border-stone-200 bg-white text-stone-400 hover:text-stone-700'
+            }`}
+            title="View tasks stored in the archive state"
+          >
+            <Archive className="w-3.5 h-3.5" />
+            <span>Archived ({archivedTasks.length})</span>
+          </button>
+
+          {/* New Task Button */}
           <button
             onClick={() => setIsAddingTask(true)}
             className="flex items-center space-x-1.5 px-4 py-2 bg-black hover:bg-stone-800 text-white text-[10px] uppercase font-bold tracking-wider transition shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)] shrink-0"
@@ -743,7 +817,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
       {/* Kanban Board Container (Swimlanes or Standard View) */}
       <div className="space-y-6">
         {swimlanes.map((swimlane) => {
-          const swimlaneTasks = tasks.filter(swimlane.filter);
+          const swimlaneTasks = activeTasks.filter(swimlane.filter);
           const isCollapsed = collapsedSwimlanes[swimlane.id];
           const swimlaneDays = swimlaneTasks.reduce((acc, t) => acc + (t.estimateDays || 0), 0);
           const swimlaneTimeLoggedSec = swimlaneTasks.reduce(
@@ -863,9 +937,33 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                               ({String(colTasks.length).padStart(2, '0')})
                             </span>
                           </div>
-                          <span className="text-[9px] font-mono text-stone-400">
-                            {colTasks.reduce((acc, t) => acc + (t.estimateDays || 0), 0)}d
-                          </span>
+
+                          <div className="flex items-center space-x-2">
+                            {/* Quick Archive All Completed Button in Done Column Header */}
+                            {col.id === 'done' && colTasks.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleArchiveAllDone(colTasks);
+                                }}
+                                disabled={isArchivingAll}
+                                className="flex items-center space-x-1 px-1.5 py-0.5 bg-stone-200 hover:bg-black hover:text-white text-stone-700 text-[9px] font-mono uppercase font-bold tracking-wider transition border border-stone-300"
+                                title="Archive all completed tasks in this view to keep board tidy"
+                              >
+                                {isArchivingAll ? (
+                                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                ) : (
+                                  <Archive className="w-2.5 h-2.5" />
+                                )}
+                                <span>Archive All</span>
+                              </button>
+                            )}
+
+                            <span className="text-[9px] font-mono text-stone-400">
+                              {colTasks.reduce((acc, t) => acc + (t.estimateDays || 0), 0)}d
+                            </span>
+                          </div>
                         </div>
 
                         {/* Task List Inside Column */}
@@ -1090,6 +1188,8 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                     } ${
                                       task.status === 'in_progress'
                                         ? 'border-l-2 border-l-black'
+                                        : task.status === 'done'
+                                        ? 'border-l-2 border-l-emerald-600'
                                         : ''
                                     } ${!isEditing ? 'cursor-grab active:cursor-grabbing' : ''}`}
                                   >
@@ -1109,6 +1209,16 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                         className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition"
                                         onMouseDown={(e) => e.stopPropagation()}
                                       >
+                                        {/* Quick Archive button on hover */}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleArchiveTask(task.id)}
+                                          className="text-stone-400 hover:text-black transition p-1 bg-white border border-stone-200 hover:border-black"
+                                          title="Archive task to keep workspace tidy"
+                                        >
+                                          <Archive className="w-3 h-3" />
+                                        </button>
+
                                         <button
                                           type="button"
                                           onClick={() => handleStartInlineEdit(task)}
@@ -1171,19 +1281,38 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                     <div className="flex items-center justify-between pt-1">
                                       {renderPriorityBadge(task.priority)}
 
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleMoveTask(task.id, task.status);
-                                        }}
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                        className="flex items-center space-x-1 text-[10px] uppercase font-bold tracking-wider text-stone-600 hover:text-black transition"
-                                        title="Advance task to next column status"
-                                      >
-                                        <span>Advance</span>
-                                        <ChevronRight className="w-3 h-3" />
-                                      </button>
+                                      <div className="flex items-center space-x-1.5">
+                                        {/* Prominent Archive Action on Completed Tasks */}
+                                        {task.status === 'done' && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleArchiveTask(task.id);
+                                            }}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            className="flex items-center space-x-1 px-2 py-0.5 bg-stone-200 hover:bg-black hover:text-white text-stone-800 text-[10px] font-mono uppercase font-bold tracking-wider transition border border-stone-300"
+                                            title="Archive completed task (removes from active board to keep workspace tidy)"
+                                          >
+                                            <Archive className="w-3 h-3" />
+                                            <span>Archive</span>
+                                          </button>
+                                        )}
+
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleMoveTask(task.id, task.status);
+                                          }}
+                                          onMouseDown={(e) => e.stopPropagation()}
+                                          className="flex items-center space-x-1 text-[10px] uppercase font-bold tracking-wider text-stone-600 hover:text-black transition"
+                                          title="Advance task to next column status"
+                                        >
+                                          <span>Advance</span>
+                                          <ChevronRight className="w-3 h-3" />
+                                        </button>
+                                      </div>
                                     </div>
 
                                     {/* Task Time Tracker Component */}
@@ -1226,6 +1355,171 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
           );
         })}
       </div>
+
+      {/* Archived Tasks Modal / Drawer */}
+      {isArchivedModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in"
+          onClick={() => setIsArchivedModalOpen(false)}
+        >
+          <div
+            className="bg-white border-2 border-black max-w-2xl w-full shadow-[8px_8px_0px_0px_rgba(0,0,0,0.25)] flex flex-col max-h-[85vh] overflow-hidden animate-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-black bg-stone-50 flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <Archive className="w-5 h-5 text-black" />
+                  <h3 className="font-serif italic text-xl sm:text-2xl font-bold text-black tracking-tight">
+                    Archived Workspace Tasks
+                  </h3>
+                  <span className="px-2 py-0.5 bg-black text-white font-mono text-[10px] uppercase font-bold tracking-wider">
+                    {archivedTasks.length} {archivedTasks.length === 1 ? 'task' : 'tasks'}
+                  </span>
+                </div>
+                <p className="text-xs text-stone-600 mt-1 font-sans">
+                  Completed tasks removed from active board view to keep your workspace tidy. You can restore them to the board anytime.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsArchivedModalOpen(false)}
+                className="text-stone-400 hover:text-black transition p-1 font-mono text-base"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Search & Filter Bar */}
+            <div className="p-3 border-b border-stone-200 bg-white flex items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  value={archivedSearchQuery}
+                  onChange={(e) => setArchivedSearchQuery(e.target.value)}
+                  placeholder="Search archived tasks by title, assignee, or ID..."
+                  className="w-full bg-stone-50 border border-stone-200 pl-8 pr-3 py-1.5 text-xs text-black placeholder-stone-400 focus:outline-hidden focus:border-black font-sans"
+                />
+              </div>
+
+              {archivedTasks.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleRestoreAllArchived}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-stone-100 text-black border border-stone-300 text-[10px] uppercase font-bold tracking-wider transition shrink-0"
+                  title="Restore all archived tasks back to the active board"
+                >
+                  <ArchiveRestore className="w-3 h-3" />
+                  <span>Restore All</span>
+                </button>
+              )}
+            </div>
+
+            {/* Modal List Content */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-stone-50/50">
+              {filteredArchivedTasks.length === 0 ? (
+                <div className="py-12 text-center space-y-2">
+                  <Archive className="w-10 h-10 text-stone-300 mx-auto stroke-1" />
+                  <p className="text-xs font-mono uppercase tracking-wider text-stone-500 font-bold">
+                    {archivedSearchQuery
+                      ? 'No archived tasks matched your search.'
+                      : 'No tasks currently archived.'}
+                  </p>
+                  <p className="text-[11px] text-stone-400 max-w-sm mx-auto font-sans">
+                    When you complete tasks on the active roadmap, use the "Archive" action on any task card to store them here and keep the active board clutter-free.
+                  </p>
+                </div>
+              ) : (
+                filteredArchivedTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="p-3.5 bg-white border border-stone-200 hover:border-black transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+                  >
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[9px] font-mono text-stone-400 uppercase tracking-wider">
+                          {task.id}
+                        </span>
+                        <span className="px-1.5 py-0.5 text-[9px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase font-bold flex items-center space-x-1">
+                          <CheckCircle2 className="w-2.5 h-2.5" />
+                          <span>Done</span>
+                        </span>
+                        {renderPriorityBadge(task.priority)}
+                        {task.archivedAt && (
+                          <span className="text-[9px] font-mono text-stone-400">
+                            Archived: {new Date(task.archivedAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+
+                      <h4 className="text-sm font-medium text-stone-900 truncate">
+                        {task.title}
+                      </h4>
+
+                      {task.description && (
+                        <p className="text-[11px] text-stone-500 line-clamp-1 font-serif italic">
+                          {task.description}
+                        </p>
+                      )}
+
+                      <div className="flex items-center space-x-3 text-[10px] text-stone-500 font-mono pt-1">
+                        <span>Assigned: {task.assignee}</span>
+                        <span>•</span>
+                        <span>{task.estimateDays}d estimate</span>
+                        {task.timeSpentSeconds ? (
+                          <>
+                            <span>•</span>
+                            <span className="text-amber-800 font-bold">
+                              ⏱ {formatTotalHours(task.timeSpentSeconds)} logged
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-100">
+                      <button
+                        type="button"
+                        onClick={() => handleRestoreTask(task.id)}
+                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-black hover:bg-stone-800 text-white text-[10px] uppercase font-bold tracking-wider transition shadow-2xs"
+                        title="Restore task back to the active board"
+                      >
+                        <ArchiveRestore className="w-3.5 h-3.5" />
+                        <span>Restore to Board</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTask(task.id)}
+                        className="p-1.5 text-stone-400 hover:text-black hover:bg-stone-100 border border-stone-200 transition"
+                        title="Delete task permanently"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 border-t border-stone-200 bg-white flex items-center justify-between text-xs text-stone-500 font-mono">
+              <span>{filteredArchivedTasks.length} shown</span>
+              <button
+                type="button"
+                onClick={() => setIsArchivedModalOpen(false)}
+                className="px-4 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold uppercase text-[10px] tracking-wider transition border border-stone-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
