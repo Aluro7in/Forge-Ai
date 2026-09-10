@@ -1,6 +1,13 @@
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt?: string;
+}
+
 export interface Task {
   id: string;
   projectId: string;
@@ -13,6 +20,7 @@ export interface Task {
   estimateDays: number;
   dueDate?: string;
   tags: string[];
+  subtasks?: Subtask[];
   timeSpentSeconds?: number;
   archived?: boolean;
   archivedAt?: string;

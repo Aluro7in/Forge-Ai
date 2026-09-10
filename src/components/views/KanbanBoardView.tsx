@@ -1,8 +1,10 @@
 import React, { useState, useRef, useMemo } from 'react';
+import { motion } from 'motion/react';
 import {
   Plus,
   Clock,
   AlertCircle,
+  AlertTriangle,
   ChevronRight,
   ChevronDown,
   Trash2,
@@ -22,11 +24,16 @@ import {
   RotateCcw,
   Search,
   CheckCircle2,
+  CheckSquare,
+  Square,
+  Maximize2,
+  Flame,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Task, TaskStatus, TaskPriority, Milestone } from '../../types/forge';
 import { DashboardSummary } from '../DashboardSummary';
 import { TaskTimerTracker } from '../TaskTimerTracker';
+import { TaskCardModal, PRIORITY_CONFIG, getDueDateAnalysis } from '../TaskCardModal';
 
 export type SwimlaneMode = 'none' | 'phase' | 'urgency';
 
@@ -64,12 +71,20 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
   const [archivedSearchQuery, setArchivedSearchQuery] = useState('');
   const [isArchivingAll, setIsArchivingAll] = useState(false);
 
+  // Task Card Detail & Subtask Modal State
+  const [modalTaskId, setModalTaskId] = useState<string | null>(null);
+  const selectedModalTask = useMemo(
+    () => tasks.find((t) => t.id === modalTaskId) || null,
+    [tasks, modalTaskId]
+  );
+
   // Quick Task Creation State
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('high');
   const [newTaskAssignee, setNewTaskAssignee] = useState('Founder A (Tech)');
   const [newTaskEstimate, setNewTaskEstimate] = useState(1);
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [newTaskMilestoneId, setNewTaskMilestoneId] = useState<string>(milestones[0]?.id || '');
 
   // Inline Quick-Edit State
@@ -248,11 +263,64 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
       assignee: newTaskAssignee,
       estimateDays: Number(newTaskEstimate),
       milestoneId: newTaskMilestoneId || undefined,
+      dueDate: newTaskDueDate || undefined,
       tags: ['HumanCreated'],
     });
 
     setNewTaskTitle('');
+    setNewTaskDueDate('');
     setIsAddingTask(false);
+  };
+
+  // Task Details Modal Save Handler
+  const handleSaveModalTask = async (updatedTask: Task) => {
+    setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+
+    try {
+      await executeToolByName('update_task', {
+        taskId: updatedTask.id,
+        title: updatedTask.title,
+        description: updatedTask.description,
+        status: updatedTask.status,
+        priority: updatedTask.priority,
+        assignee: updatedTask.assignee,
+        milestoneId: updatedTask.milestoneId || undefined,
+        estimateDays: updatedTask.estimateDays,
+        dueDate: updatedTask.dueDate || undefined,
+        subtasks: updatedTask.subtasks || [],
+        archived: updatedTask.archived,
+        archivedAt: updatedTask.archivedAt,
+      });
+    } catch (err) {
+      console.error('Failed to update task via WebMCP:', err);
+    }
+  };
+
+  // Quick Card Subtask Toggle Handler
+  const handleToggleCardSubtask = async (
+    e: React.MouseEvent,
+    task: Task,
+    subtaskId: string
+  ) => {
+    e.stopPropagation();
+    const updatedSubtasks = (task.subtasks || []).map((s) =>
+      s.id === subtaskId ? { ...s, completed: !s.completed } : s
+    );
+    const updatedTask = {
+      ...task,
+      subtasks: updatedSubtasks,
+      updatedAt: new Date().toISOString(),
+    };
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? updatedTask : t)));
+
+    try {
+      await executeToolByName('update_task', {
+        taskId: task.id,
+        subtasks: updatedSubtasks,
+      });
+    } catch (err) {
+      console.error('Failed to update subtask via WebMCP:', err);
+    }
   };
 
   const handleOpenAddInSwimlane = (swimlane: SwimlaneDef) => {
@@ -573,15 +641,14 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
   };
 
   const renderPriorityBadge = (p: TaskPriority) => {
-    const styles: Record<TaskPriority, string> = {
-      urgent: 'bg-black text-white border-black',
-      high: 'bg-stone-200 text-stone-900 border-stone-400',
-      medium: 'bg-white text-stone-800 border-stone-300',
-      low: 'bg-stone-100 text-stone-500 border-stone-200',
-    };
+    const config = PRIORITY_CONFIG[p] || PRIORITY_CONFIG.medium;
     return (
-      <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase font-mono border ${styles[p]}`}>
-        {p}
+      <span
+        className={`inline-flex items-center space-x-1 px-1.5 py-0.5 text-[9px] font-bold uppercase font-mono border ${config.badgeClass}`}
+        title={`Priority: ${config.label} - ${config.description}`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${config.dotClass}`} />
+        <span>{config.label}</span>
       </span>
     );
   };
@@ -746,7 +813,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               placeholder="Task title..."
-              className="sm:col-span-4 bg-white border border-stone-300 rounded-none px-3 py-2 text-xs text-black placeholder-stone-400 focus:outline-hidden focus:border-black font-sans"
+              className="sm:col-span-3 bg-white border border-stone-300 rounded-none px-3 py-2 text-xs text-black placeholder-stone-400 focus:outline-hidden focus:border-black font-sans"
               autoFocus
             />
 
@@ -755,10 +822,10 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
               onChange={(e) => setNewTaskPriority(e.target.value as TaskPriority)}
               className="sm:col-span-2 bg-white border border-stone-300 rounded-none px-2 py-2 text-xs text-black focus:outline-hidden focus:border-black uppercase font-mono text-[11px]"
             >
-              <option value="urgent">Urgent</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <option value="urgent">🔴 Urgent</option>
+              <option value="high">🟠 High</option>
+              <option value="medium">🔵 Medium</option>
+              <option value="low">⚪ Low</option>
             </select>
 
             <select
@@ -785,13 +852,21 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
             </select>
 
             <input
+              type="date"
+              value={newTaskDueDate}
+              onChange={(e) => setNewTaskDueDate(e.target.value)}
+              className="sm:col-span-2 bg-white border border-stone-300 rounded-none px-2 py-2 text-xs text-black focus:outline-hidden focus:border-black font-mono text-[11px]"
+              title="Target Due Date"
+            />
+
+            <input
               type="number"
               step="0.5"
               min="0.5"
               max="14"
               value={newTaskEstimate}
               onChange={(e) => setNewTaskEstimate(Number(e.target.value))}
-              className="sm:col-span-2 bg-white border border-stone-300 rounded-none px-2 py-2 text-xs text-black focus:outline-hidden focus:border-black font-mono"
+              className="sm:col-span-1 bg-white border border-stone-300 rounded-none px-2 py-2 text-xs text-black focus:outline-hidden focus:border-black font-mono"
               placeholder="Days"
             />
           </div>
@@ -1168,29 +1243,59 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                   {isTargetTop && (
                                     <div className="h-1.5 bg-black rounded-full my-1 animate-pulse shadow-xs" />
                                   )}
-                                  <div
+                                  <motion.div
+                                    layout
+                                    whileHover={
+                                      !isEditing
+                                        ? {
+                                            y: -2,
+                                            scale: 1.012,
+                                            transition: { duration: 0.15, ease: 'easeOut' },
+                                          }
+                                        : undefined
+                                    }
+                                    whileTap={!isEditing ? { scale: 0.995 } : undefined}
                                     draggable={!isEditing}
+                                    onDoubleClick={() => setModalTaskId(task.id)}
                                     onDragStart={(e) =>
-                                      handleDragStart(e, task, swimlane.id, col.id, taskIndex)
+                                      handleDragStart(
+                                        e as unknown as React.DragEvent<HTMLDivElement>,
+                                        task,
+                                        swimlane.id,
+                                        col.id,
+                                        taskIndex
+                                      )
                                     }
                                     onDragEnd={handleDragEnd}
                                     onDragOver={(e) =>
-                                      handleCardDragOver(e, swimlane.id, col.id, taskIndex)
+                                      handleCardDragOver(
+                                        e as unknown as React.DragEvent<HTMLDivElement>,
+                                        swimlane.id,
+                                        col.id,
+                                        taskIndex
+                                      )
                                     }
                                     onDragLeave={handleCardDragLeave}
                                     onDrop={(e) =>
-                                      handleCardDrop(e, swimlane, col.id, taskIndex)
+                                      handleCardDrop(
+                                        e as unknown as React.DragEvent<HTMLDivElement>,
+                                        swimlane,
+                                        col.id,
+                                        taskIndex
+                                      )
                                     }
-                                    className={`p-4 border space-y-2.5 transition group relative ${
+                                    className={`p-4 border space-y-2.5 transition-shadow duration-200 group relative ${
                                       isBeingDragged
                                         ? 'opacity-40 border-dashed border-black bg-stone-100 scale-[0.98]'
-                                        : 'bg-[#FCFAF7] border-stone-200 hover:border-black shadow-xs'
+                                        : 'bg-[#FCFAF7] border-stone-200 hover:border-black hover:shadow-md shadow-xs'
                                     } ${
-                                      task.status === 'in_progress'
-                                        ? 'border-l-2 border-l-black'
-                                        : task.status === 'done'
-                                        ? 'border-l-2 border-l-emerald-600'
-                                        : ''
+                                      task.priority === 'urgent'
+                                        ? 'border-l-4 border-l-red-500'
+                                        : task.priority === 'high'
+                                        ? 'border-l-4 border-l-amber-500'
+                                        : task.priority === 'medium'
+                                        ? 'border-l-4 border-l-blue-500'
+                                        : 'border-l-4 border-l-slate-300'
                                     } ${!isEditing ? 'cursor-grab active:cursor-grabbing' : ''}`}
                                   >
                                     <div className="flex items-start justify-between gap-2">
@@ -1209,6 +1314,16 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                         className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition"
                                         onMouseDown={(e) => e.stopPropagation()}
                                       >
+                                        {/* Modal Details & Date Picker / Subtasks */}
+                                        <button
+                                          type="button"
+                                          onClick={() => setModalTaskId(task.id)}
+                                          className="text-stone-400 hover:text-black transition p-1 bg-white border border-stone-200 hover:border-black"
+                                          title="Open task modal with date picker & subtask checklist"
+                                        >
+                                          <Maximize2 className="w-3 h-3" />
+                                        </button>
+
                                         {/* Quick Archive button on hover */}
                                         <button
                                           type="button"
@@ -1238,24 +1353,50 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                       </div>
                                     </div>
 
-                                    {/* Title with click-to-edit cursor */}
+                                    {/* Title with click-to-open cursor */}
                                     <h4
-                                      onClick={() => handleStartInlineEdit(task)}
+                                      onClick={() => setModalTaskId(task.id)}
                                       className="text-sm font-medium leading-snug text-black cursor-pointer hover:underline decoration-stone-400 underline-offset-2"
-                                      title="Click to inline quick-edit task"
+                                      title="Click to open task details and subtask manager"
                                     >
                                       {task.title}
                                     </h4>
 
                                     {task.description && (
                                       <p
-                                        onClick={() => handleStartInlineEdit(task)}
+                                        onClick={() => setModalTaskId(task.id)}
                                         className="text-[11px] text-stone-600 line-clamp-2 leading-relaxed font-serif italic cursor-pointer"
-                                        title="Click to inline quick-edit description"
+                                        title="Click to open task details"
                                       >
                                         {task.description}
                                       </p>
                                     )}
+
+                                    {/* Due Date Warning Badge (Overdue, Due Today, Approaching, Future) */}
+                                    {task.dueDate && (() => {
+                                      const dateAnalysis = getDueDateAnalysis(task.dueDate, task.status === 'done');
+                                      if (!dateAnalysis) return null;
+                                      const DateIcon = dateAnalysis.icon;
+                                      return (
+                                        <div className="pt-0.5 flex items-center space-x-1.5">
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setModalTaskId(task.id);
+                                            }}
+                                            className={`inline-flex items-center space-x-1 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider border transition hover:opacity-85 ${dateAnalysis.badgeClass}`}
+                                            title={`${dateAnalysis.urgencyMessage || dateAnalysis.label} (Click to open date picker)`}
+                                          >
+                                            <DateIcon className="w-3 h-3 shrink-0" />
+                                            <span>{dateAnalysis.label}</span>
+                                            {dateAnalysis.isWarning && task.status !== 'done' && (
+                                              <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping ml-0.5" />
+                                            )}
+                                          </button>
+                                        </div>
+                                      );
+                                    })()}
 
                                     {/* Milestone tag badge if in non-phase mode */}
                                     {swimlaneMode !== 'phase' && milestoneObj && (
@@ -1265,6 +1406,86 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                         </span>
                                       </div>
                                     )}
+
+                                    {/* Subtasks Progress & Checklist on Card */}
+                                    {task.subtasks && task.subtasks.length > 0 && (() => {
+                                      const total = task.subtasks.length;
+                                      const completed = task.subtasks.filter((s) => s.completed).length;
+                                      const percent = Math.round((completed / total) * 100);
+                                      return (
+                                        <div className="pt-1.5 space-y-1.5 border-t border-stone-200/70">
+                                          <div className="flex items-center justify-between text-[9px] font-mono">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setModalTaskId(task.id);
+                                              }}
+                                              className="flex items-center space-x-1 text-stone-600 hover:text-black transition"
+                                              title="Click to manage subtasks in modal"
+                                            >
+                                              <CheckSquare className="w-3 h-3 text-stone-500" />
+                                              <span className="font-bold uppercase tracking-wider">Subtasks:</span>
+                                              <span>{completed}/{total}</span>
+                                            </button>
+                                            <span
+                                              className={`font-bold ${
+                                                percent === 100 ? 'text-emerald-700' : 'text-stone-600'
+                                              }`}
+                                            >
+                                              {percent}%
+                                            </span>
+                                          </div>
+
+                                          {/* Mini Progress Bar */}
+                                          <div className="w-full bg-stone-200 h-1 overflow-hidden border border-stone-300">
+                                            <div
+                                              className={`h-full transition-all duration-300 ${
+                                                percent === 100 ? 'bg-emerald-600' : percent > 50 ? 'bg-black' : 'bg-stone-700'
+                                              }`}
+                                              style={{ width: `${percent}%` }}
+                                            />
+                                          </div>
+
+                                          {/* Interactive mini checklist with direct toggle */}
+                                          <div className="space-y-1 pt-0.5">
+                                            {task.subtasks.slice(0, 3).map((sub) => (
+                                              <div
+                                                key={sub.id}
+                                                onClick={(e) => handleToggleCardSubtask(e, task, sub.id)}
+                                                className="flex items-center space-x-1.5 text-[10px] text-stone-700 hover:text-black cursor-pointer group/sub py-0.5 select-none"
+                                                title={sub.completed ? 'Click to mark incomplete' : 'Click to mark complete'}
+                                              >
+                                                {sub.completed ? (
+                                                  <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                                                ) : (
+                                                  <Square className="w-3 h-3 text-stone-400 group-hover/sub:text-black shrink-0" />
+                                                )}
+                                                <span
+                                                  className={`truncate font-sans ${
+                                                    sub.completed ? 'line-through text-stone-400' : 'text-stone-800'
+                                                  }`}
+                                                >
+                                                  {sub.title}
+                                                </span>
+                                              </div>
+                                            ))}
+                                            {task.subtasks.length > 3 && (
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setModalTaskId(task.id);
+                                                }}
+                                                className="text-[9px] font-mono text-stone-500 hover:text-black italic pl-4"
+                                              >
+                                                +{task.subtasks.length - 3} more checklist items...
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
 
                                     <div className="flex items-center justify-between text-[10px] text-stone-500 pt-2 border-t border-stone-200">
                                       <div className="italic truncate pr-2">
@@ -1322,7 +1543,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                       onTimerStart={(id) => setActiveTimerTaskId(id)}
                                       onTimerStop={() => setActiveTimerTaskId(null)}
                                     />
-                                  </div>
+                                  </motion.div>
                                   {isTargetBottom && (
                                     <div className="h-1.5 bg-black rounded-full my-1 animate-pulse shadow-xs" />
                                   )}
@@ -1520,6 +1741,17 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
           </div>
         </div>
       )}
+
+      {/* Task Details & Subtask Checklist Modal */}
+      <TaskCardModal
+        task={selectedModalTask}
+        isOpen={!!selectedModalTask}
+        onClose={() => setModalTaskId(null)}
+        onSave={handleSaveModalTask}
+        onDelete={handleDeleteTask}
+        onArchiveToggle={(t) => handleArchiveTask(t.id)}
+        milestones={milestones}
+      />
     </div>
   );
 };

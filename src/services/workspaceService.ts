@@ -1,6 +1,7 @@
 import {
   Project,
   Task,
+  Subtask,
   Milestone,
   Document,
   CanvasCard,
@@ -580,6 +581,7 @@ export class WorkspaceService {
     estimateDays?: number;
     tags?: string[];
     dueDate?: string;
+    subtasks?: Subtask[];
     projectId?: string;
   }): ToolResult & { affectedObjects?: AffectedObject[] } {
     if (!input || typeof input.title !== 'string' || !input.title.trim()) {
@@ -631,6 +633,7 @@ export class WorkspaceService {
       estimateDays: input.estimateDays !== undefined ? Number(input.estimateDays) : 1,
       dueDate: input.dueDate,
       tags: input.tags || ['WebMCPCreated'],
+      subtasks: input.subtasks || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -655,6 +658,7 @@ export class WorkspaceService {
       estimateDays?: number;
       tags?: string[];
       dueDate?: string;
+      subtasks?: Subtask[];
     }>;
     projectId?: string;
   }): ToolResult & { affectedObjects?: AffectedObject[]; tasks?: Task[]; count?: number } {
@@ -726,6 +730,7 @@ export class WorkspaceService {
         estimateDays: item.estimateDays !== undefined ? Number(item.estimateDays) : 1,
         dueDate: item.dueDate,
         tags: item.tags || ['WebMCPCreated', 'BulkCreated'],
+        subtasks: item.subtasks || [],
         createdAt: now,
         updatedAt: now,
       };
@@ -759,6 +764,7 @@ export class WorkspaceService {
     estimateDays?: number;
     tags?: string[];
     dueDate?: string;
+    subtasks?: Subtask[];
     archived?: boolean;
     archivedAt?: string;
   }): ToolResult & { affectedObjects?: AffectedObject[]; task?: Task } {
@@ -816,6 +822,7 @@ export class WorkspaceService {
             ...(input.timeSpentSeconds !== undefined ? { timeSpentSeconds: Math.max(0, Number(input.timeSpentSeconds)) } : {}),
             ...(input.estimateDays !== undefined ? { estimateDays: Number(input.estimateDays) } : {}),
             ...(input.dueDate !== undefined ? { dueDate: input.dueDate } : {}),
+            ...(input.subtasks !== undefined ? { subtasks: input.subtasks } : {}),
             ...(input.tags !== undefined ? { tags: input.tags } : {}),
             ...(input.archived !== undefined ? { archived: input.archived } : {}),
             ...(input.archivedAt !== undefined ? { archivedAt: input.archivedAt } : {}),
