@@ -154,14 +154,15 @@
 }
 
 .dark .bg-black {
-  background-color: #E2E8F0 !important;
-  color: #0A0D14 !important;
+  background-color: #1E293B !important;
+  color: #F8FAFC !important;
+  border-color: #334155 !important;
 }
 
 .dark .bg-black * {
-  color: #0A0D14 !important;
+  color: #F8FAFC !important;
 }
 
 .dark .hover\:bg-stone-800:hover {
-  background-color: #CBD5E1 !important;
+  background-color: #2D3B55 !important;
 }
