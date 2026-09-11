@@ -166,3 +166,29 @@
 .dark .hover\:bg-stone-800:hover {
   background-color: #2D3B55 !important;
 }
+
+/* Global Font Size Reading Modes for Accessibility */
+html.font-compact {
+  font-size: 14px;
+}
+
+html.font-comfortable {
+  font-size: 16px;
+}
+
+html.font-spacious {
+  font-size: 18px;
+}
+
+html.font-compact body {
+  line-height: 1.45;
+}
+
+html.font-comfortable body {
+  line-height: 1.55;
+}
+
+html.font-spacious body {
+  line-height: 1.65;
+}
+

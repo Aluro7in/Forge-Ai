@@ -1,12 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type Theme = 'light' | 'dark';
+export type FontSizeMode = 'compact' | 'comfortable' | 'spacious';
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   isDark: boolean;
+  fontSizeMode: FontSizeMode;
+  setFontSizeMode: (mode: FontSizeMode) => void;
+  cycleFontSizeMode: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -26,6 +30,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return 'light';
   });
 
+  const [fontSizeMode, setFontSizeModeState] = useState<FontSizeMode>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('forge-font-size-mode') as FontSizeMode | null;
+      if (saved === 'compact' || saved === 'comfortable' || saved === 'spacious') {
+        return saved;
+      }
+    }
+    return 'comfortable';
+  });
+
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem('forge-theme', newTheme);
@@ -33,6 +47,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  const setFontSizeMode = (mode: FontSizeMode) => {
+    setFontSizeModeState(mode);
+    localStorage.setItem('forge-font-size-mode', mode);
+  };
+
+  const cycleFontSizeMode = () => {
+    setFontSizeModeState((current) => {
+      const next: FontSizeMode =
+        current === 'comfortable' ? 'compact' : current === 'compact' ? 'spacious' : 'comfortable';
+      localStorage.setItem('forge-font-size-mode', next);
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -46,6 +74,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [theme]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('font-compact', 'font-comfortable', 'font-spacious');
+    root.classList.add(`font-${fontSizeMode}`);
+    root.setAttribute('data-font-size', fontSizeMode);
+  }, [fontSizeMode]);
+
   return (
     <ThemeContext.Provider
       value={{
@@ -53,6 +88,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setTheme,
         toggleTheme,
         isDark: theme === 'dark',
+        fontSizeMode,
+        setFontSizeMode,
+        cycleFontSizeMode,
       }}
     >
       {children}

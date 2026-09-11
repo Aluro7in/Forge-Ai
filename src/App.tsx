@@ -25,6 +25,7 @@ import { DocumentsView } from './components/views/DocumentsView';
 function WorkspaceLayout() {
   const [activeView, setActiveView] = useState<ActiveView>('board');
   const [isAgentPanelOpen, setIsAgentPanelOpen] = useState(true);
+  const [isZenMode, setIsZenMode] = useState(false);
   const [isHeroDemoOpen, setIsHeroDemoOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
@@ -42,9 +43,24 @@ function WorkspaceLayout() {
     setIsProposalModalOpen(false);
   };
 
-  // Global Keyboard Shortcuts: Ctrl+K / Cmd+K (Search/Command Palette) & Ctrl+P / Cmd+P (Proposal Review)
+  const handleToggleZenMode = () => {
+    setIsZenMode((prev) => {
+      const next = !prev;
+      if (next) {
+        setIsAgentPanelOpen(false);
+      }
+      return next;
+    });
+  };
+
+  // Global Keyboard Shortcuts: Ctrl+K / Cmd+K (Search), Ctrl+P / Cmd+P (Proposal), Escape (Exit Zen Mode)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsZenMode(false);
+        return;
+      }
+
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
       if (!isCmdOrCtrl) return;
 
@@ -92,25 +108,50 @@ function WorkspaceLayout() {
         onOpenHelp={() => setIsHelpOpen(true)}
         onOpenSearch={() => setIsCommandPaletteOpen(true)}
         onOpenDashboardOverlay={() => setIsDashboardOverlayOpen(true)}
-        onToggleAgentPanel={() => setIsAgentPanelOpen(!isAgentPanelOpen)}
-        isAgentPanelOpen={isAgentPanelOpen}
+        onToggleAgentPanel={() => {
+          if (isZenMode) setIsZenMode(false);
+          setIsAgentPanelOpen(!isAgentPanelOpen);
+        }}
+        isAgentPanelOpen={!isZenMode && isAgentPanelOpen}
+        isZenMode={isZenMode}
+        onToggleZenMode={handleToggleZenMode}
       />
 
       {/* Main Content Area + Agent Sidepanel */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Workspace Canvas / Views */}
-        <main className="flex-1 overflow-y-auto bg-white p-2 sm:p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto bg-white dark:bg-[#111622] p-2 sm:p-4 lg:p-6 transition-all duration-200">
           {renderActiveView()}
         </main>
 
-        {/* Integrated Agent Panel */}
-        <AgentPanel
-          isOpen={isAgentPanelOpen}
-          onClose={() => setIsAgentPanelOpen(false)}
-          onOpenProposalModal={handleOpenProposal}
-          externalPrompt={agentExternalPrompt}
-          onClearExternalPrompt={() => setAgentExternalPrompt(null)}
-        />
+        {/* Integrated Agent Panel (hidden in Zen Mode) */}
+        {!isZenMode && (
+          <AgentPanel
+            isOpen={isAgentPanelOpen}
+            onClose={() => setIsAgentPanelOpen(false)}
+            onOpenProposalModal={handleOpenProposal}
+            externalPrompt={agentExternalPrompt}
+            onClearExternalPrompt={() => setAgentExternalPrompt(null)}
+          />
+        )}
+
+        {/* Zen Mode Distraction-Free Notification Pill */}
+        {isZenMode && (
+          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 flex items-center space-x-3 px-4 py-2 rounded-full bg-stone-950/90 dark:bg-stone-900/95 text-white shadow-xl border border-stone-800 dark:border-stone-700 backdrop-blur-md text-xs transition animate-in fade-in slide-in-from-bottom-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="font-sans font-medium text-stone-200">
+              Zen Mode Active • Focus workspace
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsZenMode(false)}
+              className="px-2.5 py-0.5 rounded-full bg-white/20 hover:bg-white/30 text-white font-mono text-[11px] font-bold tracking-tight transition cursor-pointer"
+              title="Exit Zen Mode (or press Escape)"
+            >
+              Exit (Esc)
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 30-Day Task Velocity & Agent Activity Metrics Overlay (Recharts) */}

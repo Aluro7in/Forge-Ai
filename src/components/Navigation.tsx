@@ -17,6 +17,9 @@ import {
   Moon,
   TrendingUp,
   BarChart3,
+  Maximize2,
+  Minimize2,
+  Type,
 } from 'lucide-react';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useTheme } from '../context/ThemeContext';
@@ -32,6 +35,8 @@ interface NavigationProps {
   onOpenDashboardOverlay?: () => void;
   onToggleAgentPanel: () => void;
   isAgentPanelOpen: boolean;
+  isZenMode?: boolean;
+  onToggleZenMode?: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -43,9 +48,11 @@ export const Navigation: React.FC<NavigationProps> = ({
   onOpenDashboardOverlay,
   onToggleAgentPanel,
   isAgentPanelOpen,
+  isZenMode = false,
+  onToggleZenMode,
 }) => {
   const { project, snapshots, undoLastChange, registeredTools, resetToInitialSeed } = useWorkspace();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, fontSizeMode, cycleFontSizeMode } = useTheme();
 
   const navItems: { id: ActiveView; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'board', label: 'Kanban Board', icon: Kanban },
@@ -184,6 +191,19 @@ export const Navigation: React.FC<NavigationProps> = ({
           {/* Vertical Divider */}
           <div className="h-4 w-px bg-stone-200 dark:bg-stone-800 hidden sm:block mx-0.5" />
 
+          {/* Global Font Size Accessibility Mode Switcher */}
+          <button
+            onClick={cycleFontSizeMode}
+            className="flex items-center space-x-1 px-2 py-1.5 rounded-lg text-xs font-medium text-stone-600 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white bg-stone-100/80 hover:bg-stone-200/70 dark:bg-stone-900/70 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800 transition cursor-pointer"
+            title={`Reading Scale: ${fontSizeMode.charAt(0).toUpperCase() + fontSizeMode.slice(1)} (Click to toggle Compact, Comfortable, Spacious)`}
+            aria-label="Toggle font size mode"
+          >
+            <Type className="w-3.5 h-3.5" />
+            <span className="font-mono text-[10px] font-bold">
+              {fontSizeMode === 'compact' ? 'A-' : fontSizeMode === 'spacious' ? 'A+' : 'A'}
+            </span>
+          </button>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -197,6 +217,26 @@ export const Navigation: React.FC<NavigationProps> = ({
               <Moon className="w-3.5 h-3.5 text-stone-700" />
             )}
           </button>
+
+          {/* Zen Mode Button */}
+          {onToggleZenMode && (
+            <button
+              onClick={onToggleZenMode}
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                isZenMode
+                  ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-xs'
+                  : 'bg-stone-100 dark:bg-stone-900 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 hover:bg-stone-200/60'
+              }`}
+              title={isZenMode ? 'Exit Zen Mode (Esc)' : 'Zen Mode: Minimize distractions & focus on primary workspace'}
+            >
+              {isZenMode ? (
+                <Minimize2 className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
+              ) : (
+                <Maximize2 className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 shrink-0" />
+              )}
+              <span className="hidden sm:inline">{isZenMode ? 'Zen Active' : 'Zen Mode'}</span>
+            </button>
+          )}
 
           {/* Reset Demo */}
           <button

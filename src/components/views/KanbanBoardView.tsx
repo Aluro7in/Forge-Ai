@@ -35,6 +35,7 @@ import { Task, TaskStatus, TaskPriority, Milestone } from '../../types/forge';
 import { DashboardSummary } from '../DashboardSummary';
 import { TaskTimerTracker } from '../TaskTimerTracker';
 import { TaskCardModal, PRIORITY_CONFIG, getDueDateAnalysis } from '../TaskCardModal';
+import { matchesTaskFuzzy, formatRelativeTime, formatFullDateTime } from '../../utils/taskFilters';
 
 export type SwimlaneMode = 'none' | 'phase' | 'urgency';
 
@@ -56,8 +57,15 @@ interface KanbanBoardViewProps {
 export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytics }) => {
   const { tasks, setTasks, milestones, executeToolByName } = useWorkspace();
 
+  // Fuzzy Search on Board State
+  const [boardSearchQuery, setBoardSearchQuery] = useState('');
+
   // Active vs Archived Tasks Segregation
   const activeTasks = useMemo(() => tasks.filter((t) => !t.archived), [tasks]);
+  const searchedActiveTasks = useMemo(() => {
+    if (!boardSearchQuery.trim()) return activeTasks;
+    return activeTasks.filter((t) => matchesTaskFuzzy(t, boardSearchQuery));
+  }, [activeTasks, boardSearchQuery]);
   const archivedTasks = useMemo(() => tasks.filter((t) => !!t.archived), [tasks]);
 
   // Swimlane View Mode State
@@ -686,8 +694,30 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Fuzzy Search Filter */}
+          <div className="relative flex items-center">
+            <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 pointer-events-none" />
+            <input
+              type="text"
+              value={boardSearchQuery}
+              onChange={(e) => setBoardSearchQuery(e.target.value)}
+              placeholder="Fuzzy search board..."
+              className="bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 pl-8 pr-7 py-1.5 text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 rounded-sm focus:outline-hidden focus:border-black dark:focus:border-white w-44 sm:w-56 font-sans transition"
+            />
+            {boardSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setBoardSearchQuery('')}
+                className="absolute right-2 text-stone-400 hover:text-black dark:hover:text-white p-0.5 cursor-pointer"
+                title="Clear search"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
           {/* Swimlane Grouping Segmented Selector */}
-          <div className="flex items-center space-x-1 bg-stone-100 p-1 border border-stone-300">
+          <div className="flex items-center space-x-1 bg-stone-100 dark:bg-stone-900 p-1 border border-stone-300 dark:border-stone-700">
             <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider px-2 py-0.5 hidden md:inline">
               Swimlanes:
             </span>
@@ -759,6 +789,25 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
 
       {/* Dashboard Progress & Completion Metrics Visualizer */}
       <DashboardSummary onOpenAnalytics={onOpenAnalytics} />
+
+      {/* Active Fuzzy Search Feedback Banner */}
+      {boardSearchQuery && (
+        <div className="flex items-center justify-between px-3.5 py-2 bg-stone-100 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-xs font-mono text-stone-800 dark:text-stone-200">
+          <div className="flex items-center space-x-2">
+            <Search className="w-3.5 h-3.5 text-stone-500 shrink-0" />
+            <span>
+              Fuzzy matching <strong>"{boardSearchQuery}"</strong> — showing {searchedActiveTasks.length} of {activeTasks.length} active tasks
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBoardSearchQuery('')}
+            className="underline hover:text-black dark:hover:text-white transition font-medium cursor-pointer"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
 
       {/* Swimlane Global Collapse / Expand Controls when active */}
       {swimlaneMode !== 'none' && (
@@ -893,7 +942,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
       {/* Kanban Board Container (Swimlanes or Standard View) */}
       <div className="space-y-6">
         {swimlanes.map((swimlane) => {
-          const swimlaneTasks = activeTasks.filter(swimlane.filter);
+          const swimlaneTasks = searchedActiveTasks.filter(swimlane.filter);
           const isCollapsed = collapsedSwimlanes[swimlane.id];
           const swimlaneDays = swimlaneTasks.reduce((acc, t) => acc + (t.estimateDays || 0), 0);
           const swimlaneTimeLoggedSec = swimlaneTasks.reduce(
@@ -1310,6 +1359,14 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                         <span className="text-[9px] font-mono text-stone-400 uppercase tracking-wider truncate">
                                           {task.id.toUpperCase()}
                                         </span>
+                                        <span className="text-[9px] font-mono text-stone-300 dark:text-stone-600">·</span>
+                                        <span
+                                          className="inline-flex items-center space-x-0.5 text-[9px] font-mono text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition"
+                                          title={`Last modified: ${formatFullDateTime(task.updatedAt || task.createdAt)}`}
+                                        >
+                                          <Clock className="w-2.5 h-2.5 shrink-0 text-stone-400" />
+                                          <span className="truncate">{formatRelativeTime(task.updatedAt || task.createdAt)}</span>
+                                        </span>
                                       </div>
                                       <div
                                         className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition"
@@ -1517,7 +1574,16 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                     </div>
 
                                     <div className="flex items-center justify-between pt-1">
-                                      {renderPriorityBadge(task.priority)}
+                                      <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                                        {renderPriorityBadge(task.priority)}
+                                        <span
+                                          className="inline-flex items-center space-x-1 px-1.5 py-0.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 text-[9px] font-mono shrink-0"
+                                          title={`Last modified: ${formatFullDateTime(task.updatedAt || task.createdAt)}`}
+                                        >
+                                          <Clock className="w-2.5 h-2.5 text-stone-400 shrink-0" />
+                                          <span>{formatRelativeTime(task.updatedAt || task.createdAt)}</span>
+                                        </span>
+                                      </div>
 
                                       <div className="flex items-center space-x-1.5">
                                         {/* Prominent Archive Action on Completed Tasks */}
