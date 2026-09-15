@@ -11,19 +11,18 @@
   ╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
 ```
 
-**A high-velocity collaborative operating system built for two first-class citizens: humans and AI agents.**  
-*Humans set intent, review proposals, and maintain absolute governance. AI agents use browser-native WebMCP to plan, create, modify, and organize real workspace data under complete human control.*
+### **The Operating System where Humans and AI Agents work side-by-side as Equal Teammates**
+*Humans set intent, review proposals, and maintain absolute safety. AI agents use browser-native WebMCP to plan, create, modify, and organize real workspace state.*
 
 ---
 
-[![WebMCP Spec](https://img.shields.io/badge/WebMCP-v1.0_Browser_Draft-purple.svg?style=flat-square)](https://github.com)
-[![React 19](https://img.shields.io/badge/React-v19.0.1-blue.svg?style=flat-square&logo=react)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-v5.8.2-blue.svg?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4.0-38bdf8.svg?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
-[![Vite](https://img.shields.io/badge/Vite-v6.2-646cff.svg?style=flat-square&logo=vite)](https://vitejs.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg?style=flat-square)](LICENSE)
+[![Live Applet](https://img.shields.io/badge/Live_Applet-Online-success.svg?style=for-the-badge&logo=google-cloud)](https://ais-dev-rimzuq4z4sbnw7cw77s5mi-191250814416.asia-southeast1.run.app)
+[![WebMCP Standard](https://img.shields.io/badge/WebMCP-v1.0_Browser_Draft-8b5cf6.svg?style=for-the-badge)](https://github.com)
+[![React 19](https://img.shields.io/badge/React-v19.0.1-61dafb.svg?style=for-the-badge&logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-v5.8.2-3178c6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8.svg?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com)
 
-[Live Applet](https://ais-dev-rimzuq4z4sbnw7cw77s5mi-191250814416.asia-southeast1.run.app) • [Architecture Overview](#-architecture--system-design) • [WebMCP Tool Catalog](#-the-18-webmcp-tools-catalog) • [Interactive Views](#-workspace-views--features) • [Walkthrough Demo](#-judge--evaluator-walkthrough)
+**[🚀 Try Live Workspace](https://ais-dev-rimzuq4z4sbnw7cw77s5mi-191250814416.asia-southeast1.run.app)** • **[⚡ 10-Second Visual Summary](#-what-is-forge-in-10-seconds)** • **[🆕 Recent Changes & Features](#-recent-updates--changelog)** • **[🛠️ 18 WebMCP Tools](#-the-18-webmcp-tools-catalog)** • **[🏆 Judge Walkthrough](#-evaluator--judge-hero-demo-walkthrough)**
 
 ---
 
@@ -31,465 +30,622 @@
 
 ## 📑 Table of Contents
 
-- [The Dual-User Paradigm](#-the-dual-user-paradigm)
-- [Architecture & System Design](#-architecture--system-design)
-  - [High-Level Flowchart](#high-level-flowchart)
-  - [WebMCP Execution & Proposal Flow](#webmcp-execution--proposal-flow)
-- [The 18 WebMCP Tools Catalog](#-the-18-webmcp-tools-catalog)
-  - [Browser Agent Integration (`document.modelContext`)](#browser-agent-integration-documentmodelcontext)
-- [Workspace Views & Features](#-workspace-views--features)
-  - [1. Kanban Board (with Horizontal Swimlanes)](#1-kanban-board-with-horizontal-swimlanes)
-  - [2. Structured Task List View](#2-structured-task-list-view)
-  - [3. Milestones & Phase Progress](#3-milestones--phase-progress)
-  - [4. 2D Interactive Concept Canvas](#4-2d-interactive-concept-canvas)
-  - [5. Markdown Document & PRD Vault](#5-markdown-document--prd-vault)
-  - [6. Live WebMCP Inspector](#6-live-webmcp-inspector)
-  - [7. 30-Day Task Velocity & Activity Analytics](#7-30-day-task-velocity--activity-analytics)
-- [Productivity & Accessibility Systems](#-productivity--accessibility-systems)
-  - [Fuzzy-Search Subsequence Engine](#fuzzy-search-subsequence-engine)
-  - [Zen Mode (Distraction-Free Focus)](#zen-mode-distraction-free-focus)
-  - [Global 3-Tier Font Size Scaling](#global-3-tier-font-size-scaling)
-  - [Voice-First Agent Orchestration](#voice-first-agent-orchestration)
-  - [Diff Proposals & 1-Click Snapshot Rollbacks](#diff-proposals--1-click-snapshot-rollbacks)
-  - [Command Palette (Ctrl+K / Cmd+K)](#command-palette-ctrlk--cmdk)
-- [Judge & Evaluator Walkthrough](#-judge--evaluator-walkthrough)
-- [Keyboard Shortcuts Cheatsheet](#-keyboard-shortcuts-cheatsheet)
-- [Directory Structure](#-directory-structure)
-- [Getting Started & Development](#-getting-started--development)
-- [Security & Deterministic Safety](#-security--deterministic-safety)
+1. [⚡ What is Forge in 10 Seconds?](#-what-is-forge-in-10-seconds)
+2. [🆕 Recent Updates & Changelog](#-recent-updates--changelog)
+3. [🗺️ Interactive Workspace Visual Layout](#-interactive-workspace-visual-layout)
+4. [👥 The Dual-User Operating Model](#-the-dual-user-operating-model)
+5. [📐 Visual Architecture & System Diagrams](#-visual-architecture--system-diagrams)
+   - [Full System Topology](#full-system-topology)
+   - [WebMCP Proposal & Safe Execution Flow](#webmcp-proposal--safe-execution-flow)
+   - [Subsequence Fuzzy-Search Mechanism](#subsequence-fuzzy-search-mechanism)
+   - [Zen Mode Distraction-Free Transformation](#zen-mode-distraction-free-transformation)
+6. [🛠️ The 18 WebMCP Tools Catalog](#-the-18-webmcp-tools-catalog)
+7. [🖥️ Workspace Views Deep Dive](#-workspace-views-deep-dive)
+   - [1. Kanban Board with 3-Mode Horizontal Swimlanes](#1-kanban-board-with-3-mode-horizontal-swimlanes)
+   - [2. Tabular Task List with Dynamic Columns](#2-tabular-task-list-with-dynamic-columns)
+   - [3. Milestones & Phase Progress Tracking](#3-milestones--phase-progress-tracking)
+   - [4. 2D Interactive Concept Canvas](#4-2d-interactive-concept-canvas)
+   - [5. Technical Markdown PRD & Docs Vault](#5-technical-markdown-prd--docs-vault)
+   - [6. Live WebMCP Protocol Inspector](#6-live-webmcp-protocol-inspector)
+   - [7. 30-Day Task Velocity & Activity Analytics](#7-30-day-task-velocity--activity-analytics)
+8. [♿ Productivity & Accessibility Systems](#-productivity--accessibility-systems)
+   - [3-Tier Global Font Scaling (`compact`, `comfortable`, `spacious`)](#3-tier-global-font-scaling)
+   - [Visual Last-Modified Timestamps Engine](#visual-last-modified-timestamps-engine)
+   - [Voice-First Web Speech Orchestration](#voice-first-web-speech-orchestration)
+   - [Visual Diff Proposal Modal](#visual-diff-proposal-modal)
+   - [1-Click Cryptographic Undo](#1-click-cryptographic-undo)
+   - [Global Command Palette (Ctrl+K / Cmd+K)](#global-command-palette-ctrlk--cmdk)
+9. [🏆 Evaluator & Judge Hero Demo Walkthrough](#-evaluator--judge-hero-demo-walkthrough)
+10. [⌨️ Keyboard Shortcuts Reference](#-keyboard-shortcuts-reference)
+11. [📂 Repository Architecture](#-repository-architecture)
+12. [🚀 Getting Started & Local Development](#-getting-started--local-development)
+13. [🛡️ Security, Safety & Governance Guarantees](#-security-safety--governance-guarantees)
 
 ---
 
-## 👥 The Dual-User Paradigm
+## ⚡ What is Forge in 10 Seconds?
 
-Traditional project management tools are designed exclusively for human cursor clicks and manual form entry. Conversely, standalone chatbot interfaces trap AI capabilities inside passive chat bubbles that cannot directly interact with application state.
+Most project tools force humans to do 100% of the manual clicking, dragging, and ticket management. Chatbots, on the other hand, produce passive text that humans have to copy-paste.
 
-**Forge collapses this divide by treating both humans and autonomous AI agents as equal, synchronized users sharing one live workspace:**
+**Forge merges both worlds into one unified collaborative canvas:**
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                FORGE WORKSPACE                              │
-│                                                                             │
-│   ┌───────────────────────────┐             ┌───────────────────────────┐   │
-│   │        HUMAN USER         │             │      AI AGENT USER        │   │
-│   ├───────────────────────────┤             ├───────────────────────────┤   │
-│   │ • Defines intent & goals  │             │ • Inspects real schemas   │   │
-│   │ • Reviews diff proposals  │ ◄─────────► │ • Synthesizes plans       │   │
-│   │ • Approves / rejects ops  │             │ • Invokes WebMCP tools    │   │
-│   │ • 1-Click snapshot undo   │             │ • Batch-creates tasks     │   │
-│   │ • Speaks via Web Speech   │             │ • Updates visual canvas   │   │
-│   └───────────────────────────┘             └───────────────────────────┘   │
-│                 │                                         │                 │
-│                 ▼                                         ▼                 │
-│   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │            REACTIVE STATE & WEBMCP BROWSER BUS (`window`)            │   │
-│   │  Tasks • Milestones • 2D Canvas • Markdown Docs • Snapshot Stack   │   │
-│   └─────────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
+           TRADITIONAL PM TOOLS                         ISOLATED CHATBOTS                               FORGE WORKSPACE
+        (Jira, Trello, Linear)                         (ChatGPT, Claude)                     (Humans + AI Agents as Co-Workers)
+
+   ┌──────────────────────────────┐              ┌──────────────────────────────┐              ┌──────────────────────────────┐
+   │ 👤 Human does EVERYTHING     │              │ 🤖 AI writes text in a box   │              │ 👤 Human sets high-level goal│
+   │                              │              │                              │              │           │                  │
+   │ 🖱️ Manual ticket typing      │              │ 💬 Copy/paste code & plans   │              │           ▼                  │
+   │ 🖱️ Manual status moving      │              │ ❌ Cannot touch workspace    │              │ 🤖 Agent inspects real state │
+   │ 🖱️ Manual roadmap grooming   │              │ ❌ Hallucinates fake context │              │ 🤖 Agent proposes visual diff│
+   │                              │              │                              │              │           │                  │
+   │ ⏳ Hours wasted in meetings  │              │ 🚫 Zero workflow execution   │              │ 👤 Human clicks [Approve]   │
+   └──────────────────────────────┘              └──────────────────────────────┘              │ ⚡ State mutates atomically  │
+                                                                                               │ 📸 1-Click instant undo      │
+                                                                                               └──────────────────────────────┘
 ```
 
-| Dimension | Legacy Tools (Jira, Linear) | Generic Chatbots (ChatGPT, Claude) | **Forge** |
+---
+
+## 🆕 Recent Updates & Changelog
+
+| Feature | Category | Description | Visual Impact |
 | :--- | :--- | :--- | :--- |
-| **User Archetype** | Human-only | Human typing to text model | **Human + Agent Co-workers** |
-| **Agent Actionability** | Read-only API or third-party webhooks | Hallucinated markdown text | **Browser-Native WebMCP Tools** |
-| **Governance** | Manual ticket creation | None (user must copy/paste) | **Visual Diff Proposal Modal** |
-| **Safety & Audit** | Database audit logs | None | **1-Click Cryptographic Undo** |
-| **Interaction Modalities** | Mouse & Keyboard only | Typing only | **Voice, Text, Drag-and-Drop, CLI** |
+| **Fuzzy-Search Filter** | *Search & Discovery* | Multi-token subsequence matching across task titles, descriptions, assignees, IDs, and `#tags`. | Live counter pill (`Showing 3 of 10 tasks`), real-time highlights, instant `✕` clear. |
+| **Zen Mode** | *Focus & Productivity* | One-click distraction-free toggle hiding navigation sidebars, agent sidepanel, and chrome. | Full-width workspace, floating HUD status bar, instant exit via `Esc` or button. |
+| **3-Tier Font Size Mode** | *Accessibility* | Global font scaling context switching between **Compact (14px)**, **Comfortable (16px)**, and **Spacious (18px)**. | Persistent `localStorage` toggle with `Type` icon indicator (`A-`, `A`, `A+`). |
+| **Visual 'Last Modified'** | *Audit & Context* | Live relative timestamps (`Just now`, `12m ago`, `Yesterday`) with formatted datetime tooltips. | Prominent clock badge on Kanban card headers/footers and Task List table column. |
+| **Horizontal Swimlanes** | *Workflow Layout* | Dynamic row grouping by **Project Phase (Milestones)** or **Urgency Level (Priorities)**. | Expandable/collapsible horizontal swimlane rows with sub-totals and progress bars. |
+| **Hero Demo Walkthrough** | *Evaluation Mode* | 3-step automated tour guiding judges through Plan Generation, Scope Reduction, and 1-Click Undo. | Step banner with direct actions and live visual state updates. |
 
 ---
 
-## 📐 Architecture & System Design
+## 🗺️ Interactive Workspace Visual Layout
 
-### High-Level Flowchart
+Below is an exact visual ASCII schematic of Forge's dual-user interface:
 
-Forge runs entirely within a high-performance, reactive React 19 + TypeScript architecture with server-side Gemini AI assistance and client-side WebMCP tool bus execution:
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ ⚒️ FORGE  [Hero Roadmap ▾] [⚡ WebMCP: Ready]   [Kanban] [List] [Milestones] [Canvas] [Docs] [Inspector]  [A] [Zen] [🌙] [Hero Demo] │
+├───────────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────┤
+│                                     PRIMARY WORKSPACE CANVAS                                      │     🤖 AGENT COPILOT    │
+│                                                                                                   ├─────────────────────────┤
+│  🔍 [Fuzzy Search: "dep prx"            ✕]  Group: [Standard] [Phase] [Urgency]  [+ New Task]     │ 🎙️ Voice: [Tap to Talk] │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐  │  "I need an emergency  │
+│  │ ⚡ Active Filter: Showing 2 of 9 active tasks matching "dep prx"             [Clear Filter] │  │  scope reduction plan" │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────┘  │                         │
+│                                                                                                   │ ┌─────────────────────┐ │
+│  ┌──────────────────────────────┬──────────────────────────────┬──────────────────────────────┐   │ │ 💡 Proposal #P-104  │ │
+│  │ 📋 TO DO (2)                 │ ⏳ IN PROGRESS (1)           │ ✅ DONE (3)                  │   │ │ Scope Down - 14 Days│ │
+│  ├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤   │ │ - 2 features cut    │ │
+│  │ [URGENT] TASK-1  ⏱️ 2m ago   │ [HIGH] TASK-3    ⏱️ 15m ago  │ [DONE] TASK-2    ⏱️ 1d ago   │   │ │ + 3 tasks re-routed │ │
+│  │ Deploy Edge Reverse Proxy    │ WebMCP Bus Client Listener   │ Seed JSON Schema Fixtures    │   │ │ [Review Diff]       │ │
+│  │ 👤 Founder A  ·  2d estimate │ 👤 Founder B  ·  3d estimate │ 👤 Founder A  ·  1d estimate │   │ └─────────────────────┘ │
+│  │ 🏷️ #infrastructure #edge     │ 🏷️ #webmcp #realtime         │ 🏷️ #database #schemas        │   │                         │
+│  │ [✓ 2/3 Subtasks] [▶ Timer]   │ [✓ 1/2 Subtasks] [▶ Timer]   │ [✓ 4/4 Subtasks] [Archive]   │   │ 💬 Chat History:        │
+│  └──────────────────────────────┴──────────────────────────────┴──────────────────────────────┘   │ • Agent: State fetched  │
+├───────────────────────────────────────────────────────────────────────────────────────────────────┤ • Agent: Proposing diff │
+│ ⚡ WebMCP Bus: 18 Tools Active  •  📸 Snapshot Stack: 4 Available  •  [↩️ 1-Click Undo]              │ [Type prompt or tool...]│
+└───────────────────────────────────────────────────────────────────────────────────────────────────┴─────────────────────────┘
+```
+
+---
+
+## 👥 The Dual-User Operating Model
+
+In Forge, an AI Agent is not a peripheral chat addon—it is an **authenticated co-worker** connected to the browser's execution bus:
 
 ```mermaid
-flowchart TD
-    subgraph HumanLayer ["👤 Human Layer"]
-        A[Voice Input / Mic] -->|Web Speech API| B[Speech Recognition]
-        C[Visual UI Interaction] -->|Drag & Drop / Forms| D[React UI State]
-        E[Keyboard Shortcut Ctrl+K / Ctrl+P] -->|Command Palette| D
-        B -->|Transcribed Text| F[Agent Panel & Chat]
+graph LR
+    subgraph HumanRights ["👤 Human Rights"]
+        H1[Set Strategic Intent]
+        H2[Inspect Visual Diff Modals]
+        H3[Approve / Reject Operations]
+        H4[1-Click Cryptographic Undo]
+        H5[Voice & Tactile Drag-and-Drop]
     end
 
-    subgraph AgentLayer ["🤖 AI Agent Layer"]
-        F --> G[Workspace Context Serializer]
-        G -->|State + Prompt| H[Gemini 2.5 Server API]
-        H -->|Tool Calls & JSON Plans| I[Intent & Planner Engine]
+    subgraph SharedBus ["⚡ Shared WebMCP Runtime (`window.document.modelContext`)"]
+        B1[Real-Time State Serializer]
+        B2[18 Validated Schema Tools]
+        B3[Deterministic Snapshot Stack]
     end
 
-    subgraph WebMCPLayer ["⚡ WebMCP Browser Runtime (`document.modelContext`)"]
-        I --> J[WebMCP Dispatcher]
-        K[External Browser Agent] -->|window.document.modelContext.execute| J
-        J --> L{Requires Human Review?}
-        L -->|High Impact Changes| M[Diff Proposal Modal]
-        L -->|Standard Operations| N[Execute State Mutation]
-        M -->|User Approves| N
-        M -->|User Rejects| O[Discard Proposal]
+    subgraph AgentRights ["🤖 AI Agent Rights"]
+        A1[Query Backlog & Capacity]
+        A2[Calculate Velocity Limits]
+        A3[Synthesize Multi-Phase Plans]
+        A4[Batch-Create & Tag Tasks]
+        A5[Update 2D Canvas & Docs]
     end
 
-    subgraph StateLayer ["💾 Deterministic State & Snapshot Stack"]
-        N --> P[Capture Snapshot Stack]
-        P --> Q[Workspace Data Store]
-        Q --> R1[Kanban Board View]
-        Q --> R2[Task List Table]
-        Q --> R3[Milestones Timeline]
-        Q --> R4[2D Canvas Nodes]
-        Q --> R5[Markdown Docs Vault]
-        Q --> R6[Recharts Velocity Engine]
-        S[1-Click Undo] -->|Rollback Snapshot| Q
-    end
+    HumanRights <---> SharedBus
+    SharedBus <---> AgentRights
 ```
 
-### WebMCP Execution & Proposal Flow
+---
+
+## 📐 Visual Architecture & System Diagrams
+
+### Full System Topology
+
+```mermaid
+flowchart TB
+    subgraph UserInterface ["🖥️ Presentation Layer (React 19 + Tailwind v4)"]
+        UI_Nav[Navigation & Controls]
+        UI_KB[Kanban Board + Swimlanes]
+        UI_TL[Task List Table]
+        UI_MS[Milestones Gantt View]
+        UI_CV[2D Concept Canvas]
+        UI_DOC[Markdown Docs Vault]
+        UI_INS[WebMCP Tool Inspector]
+        UI_ZEN[Zen Mode Focus Viewport]
+    end
+
+    subgraph InputModality ["🎙️ Input Modalities"]
+        IN_Voice[Web Speech API: SpeechRecognition]
+        IN_Chat[Natural Language Chat Input]
+        IN_Shortcuts[Command Palette: Ctrl+K]
+        IN_Fuzzy[Fuzzy Search Engine]
+    end
+
+    subgraph AIOrchestration ["🧠 AI Orchestrator & Gemini Engine"]
+        CTX_Gen[Workspace Context Serializer]
+        GEMINI[Gemini 2.5 Flash Server API]
+        INTENT[Intent Classifier & Planning Core]
+    end
+
+    subgraph WebMCPProtocol ["⚡ Browser-Native WebMCP Bus (`document.modelContext`)"]
+        MCP_Reg[18 Tool JSON Schemas]
+        MCP_Exec[Deterministic Tool Runner]
+        MCP_Diff[Diff Proposal Generator]
+        MCP_Audit[Telemetry & Latency Logger]
+    end
+
+    subgraph DataStore ["💾 Reactive Workspace State & Safety Stack"]
+        STORE[(Workspace State: Tasks, Milestones, Canvas, Docs)]
+        SNAP[(Immutable Snapshot History Stack)]
+        UNDO[1-Click Rollback Engine]
+    end
+
+    InputModality --> AIOrchestration
+    AIOrchestration --> WebMCPProtocol
+    UserInterface <--> DataStore
+    WebMCPProtocol <--> DataStore
+    MCP_Diff -->|Requires Human Approval| UI_Nav
+    UNDO <--> SNAP
+    SNAP <--> STORE
+```
+
+---
+
+### WebMCP Proposal & Safe Execution Flow
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Human as 👤 Human
-    participant Agent as 🤖 AI Agent
+    actor Human as 👤 Human User
+    participant Copilot as 🤖 Agent Copilot
     participant WebMCP as ⚡ document.modelContext
-    participant Store as 🗄️ Workspace Store
+    participant DiffModal as 🪟 Visual Diff Modal
+    participant Store as 💾 Workspace Store
     participant Snapshots as 📸 Snapshot Stack
 
-    Human->>Agent: "Make this achievable for two people in 14 days"
-    Agent->>WebMCP: execute("get_project_state", {})
-    WebMCP-->>Agent: Returns active tasks, milestones, and velocity
-    Note over Agent: Synthesizes optimized plan & scope reduction
-    Agent->>WebMCP: execute("propose_changes", { title: "Scope Down", patch: [...] })
-    WebMCP->>Human: Triggers Visual Diff Proposal Modal (Before vs After)
-    Human->>Human: Inspects changed tasks, deleted scopes, and new timelines
+    Human->>Copilot: "Cut non-essential tasks to hit a 14-day launch"
+    Copilot->>WebMCP: execute("get_project_state", {})
+    WebMCP-->>Copilot: Returns 12 tasks, 3 milestones, capacity=20d
+    Note over Copilot: Computes 32d backlog > 20d capacity.<br/>Identifies 4 non-critical tasks.
+    Copilot->>WebMCP: execute("propose_changes", { title: "14-Day Scope Cut", patch: [...] })
+    WebMCP->>DiffModal: Mounts Diff Modal with Side-by-Side Visual Comparison
+    Human->>DiffModal: Inspects red deleted tasks and re-estimated urgent work
     alt Human Approves
-        Human->>WebMCP: execute("apply_proposal", { proposalId })
-        WebMCP->>Snapshots: push(deepClone(workspaceState))
-        WebMCP->>Store: Apply atomic state patch
-        Store-->>Human: UI re-renders with instant state confirmation
+        Human->>DiffModal: Clicks "Apply Changes"
+        DiffModal->>WebMCP: execute("apply_proposal", { id })
+        WebMCP->>Snapshots: push(deepClone(currentState))
+        WebMCP->>Store: Atomically applies mutations
+        Store-->>Human: Kanban and Milestones re-render with updated state
     else Human Rejects
-        Human->>WebMCP: execute("reject_proposal", { proposalId })
-        WebMCP-->>Human: Workspace remains unchanged
+        Human->>DiffModal: Clicks "Reject"
+        DiffModal->>WebMCP: execute("reject_proposal", { id })
+        WebMCP-->>Human: Workspace remains 100% untouched
     end
-    opt Human Clicks Undo
+    opt Human Wants to Undo
         Human->>WebMCP: execute("undo_changes", {})
-        Snapshots->>Store: Restore previous snapshot
-        Store-->>Human: Zero-data-loss rollback complete
+        Snapshots->>Store: Pops previous snapshot and restores
+        Store-->>Human: Instant zero-data-loss rollback
     end
+```
+
+---
+
+### Subsequence Fuzzy-Search Mechanism
+
+Forge implements an intelligent subsequence matcher (`matchesTaskFuzzy` in `/src/utils/taskFilters.ts`) that matches character sequences even when separated by spaces, dashes, or words:
+
+```
+User types query: "dep prx"
+
+1. Query Tokenization:  ["dep", "prx"]
+2. Target String:       "TASK-1: Deploy Edge Reverse Proxy #infrastructure"
+3. Subsequence Check:
+   Token 1 ("dep"):     [Dep]loy Edge Reverse Proxy  ──────► MATCH (Index 8-10)
+   Token 2 ("prx"):     Deploy Edge Reverse [Pr]o[x]y ─────► MATCH (P...r...x)
+4. Result:              ✅ MATCHED (Ranked high, displayed instantly)
+```
+
+```mermaid
+flowchart LR
+    Q[User Search Input] --> T[Tokenize by Whitespace]
+    T --> F1[Exact Substring Match?]
+    F1 -->|Yes| P[Pass Item]
+    F1 -->|No| F2[Subsequence Character Walk?]
+    F2 -->|Yes| P[Pass Item]
+    F2 -->|No| R[Reject Item]
+    P --> C[Check Title, Description, Assignee, ID, Tags]
+    C --> Render[Live Kanban & Task List Filter Update]
+```
+
+---
+
+### Zen Mode Distraction-Free Transformation
+
+Zen Mode eliminates visual noise so you can focus on pure execution:
+
+```
+               STANDARD MODE (Full Chrome)                                           ZEN MODE (Distraction-Free)
+
+┌────────────────────────────────────────────────────────┐          ┌────────────────────────────────────────────────────────┐
+│ [Top Navigation Bar: Views, Theme, Font, Hero Demo]   │          │                                                        │
+├───────────────────┬────────────────┬───────────────────┤          │                                                        │
+│ 📁 Nav Sidebar    │ 📋 Kanban Board│ 🤖 Agent Copilot  │  ──────► │                  📋 KANBAN BOARD / VIEW                │
+│ • Projects        │ • Swimlanes    │ • Voice input     │          │                  (Expanded to Full 100% Width)         │
+│ • Views           │ • Cards        │ • Proposals       │          │                                                        │
+│ • Settings        │ • Metrics      │ • Chat history    │          │                                                        │
+├───────────────────┴────────────────┴───────────────────┤          │                                                        │
+│ 📊 Bottom Status & Snapshot Bar                        │          │       [ 🟢 Zen Active • Press Esc to Exit ]            │
+└────────────────────────────────────────────────────────┘          └────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🛠️ The 18 WebMCP Tools Catalog
 
-Forge registers **18 production-grade WebMCP tools** directly onto `window.document.modelContext`. Each tool includes a strict JSON Schema, deterministic parameter validation, and telemetry logging:
+Every tool is strictly registered on `window.document.modelContext` with typed input and output schemas:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       18 REGISTERED WEBMCP TOOLS                            │
-├───────────────────┬─────────────────────────────────────────────────────────┤
-│ Workspace Query   │ • get_project_state    • analyze_project                │
-├───────────────────┼─────────────────────────────────────────────────────────┤
-│ Task Management   │ • create_task          • update_task                    │
-│                   │ • delete_task          • batch_create_tasks             │
-│                   │ • archive_task                                          │
-├───────────────────┼─────────────────────────────────────────────────────────┤
-│ Milestone Engine  │ • create_milestone     • update_milestone               │
-├───────────────────┼─────────────────────────────────────────────────────────┤
-│ Visual Canvas     │ • create_canvas_node   • update_canvas_node             │
-│                   │ • delete_canvas_node                                    │
-├───────────────────┼─────────────────────────────────────────────────────────┤
-│ Documentation     │ • create_document      • update_document                │
-├───────────────────┼─────────────────────────────────────────────────────────┤
-│ AI Governance     │ • generate_plan        • propose_changes                │
-│                   │ • apply_proposal       • reject_proposal                │
-│                   │ • undo_changes                                          │
-└───────────────────┴─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       18 REGISTERED WEBMCP TOOLS                                        │
+├──────────────────────────┬──────────────────────────┬──────────────────────────┬────────────────────────┤
+│ 🔍 QUERY & ANALYSIS      │ 📋 TASK LIFECYCLE        │ 🗺️ ROADMAP & CANVAS     │ 🛡️ SAFETY & GOVERNANCE │
+├──────────────────────────┼──────────────────────────┼──────────────────────────┼────────────────────────┤
+│ • get_project_state      │ • create_task            │ • create_milestone       │ • generate_plan        │
+│ • analyze_project        │ • update_task            │ • update_milestone       │ • propose_changes      │
+│                          │ • delete_task            │ • create_canvas_node     │ • apply_proposal       │
+│                          │ • batch_create_tasks     │ • update_canvas_node     │ • reject_proposal      │
+│                          │ • archive_task           │ • delete_canvas_node     │ • undo_changes         │
+│                          │                          │ • create_document        │                        │
+│                          │                          │ • update_document        │                        │
+└──────────────────────────┴──────────────────────────┴──────────────────────────┴────────────────────────┘
 ```
 
-### Detailed Tool Specification
+### Complete Technical Specification Table
 
-| Tool Name | Parameters | Purpose & Description |
-| :--- | :--- | :--- |
-| `get_project_state` | *None* | Serializes entire workspace state: tasks, milestones, canvas nodes, documents, and snapshots. |
-| `analyze_project` | *None* | Calculates velocity, completion percentages, urgency distributions, and bottleneck tasks. |
-| `create_task` | `title`, `priority`, `assignee`, `estimateDays`, `dueDate`, `tags` | Creates a new task with unique ID, ISO timestamps, and placement in the active backlog. |
-| `update_task` | `taskId`, `status`, `priority`, `assignee`, `title`, `description`, etc. | Mutates existing task fields, updates `updatedAt` relative timestamp, and triggers UI updates. |
-| `delete_task` | `taskId` | Permanently removes a task from the active board after snapshot preservation. |
-| `batch_create_tasks` | `tasks[]` | Atomically creates multiple tasks at once (used during roadmap plan generation). |
-| `archive_task` | `taskId`, `unarchive?` | Toggles archival state to keep the active board clean without deleting historical records. |
-| `create_milestone` | `title`, `targetDate`, `description`, `deliverables[]` | Defines a project phase with progress metrics and target completion dates. |
-| `update_milestone` | `milestoneId`, `status`, `progress`, `targetDate` | Updates milestone lifecycle status (`upcoming`, `in_progress`, `completed`). |
-| `create_canvas_node` | `type`, `label`, `x`, `y`, `color`, `content` | Spawns interactive 2D canvas nodes (cards, notes, concepts, triggers). |
-| `update_canvas_node` | `nodeId`, `x`, `y`, `label`, `content`, `color` | Repositions or rewrites content on 2D visual canvas cards. |
-| `delete_canvas_node` | `nodeId` | Deletes a node and any connected edge relationships from the canvas. |
-| `create_document` | `title`, `content`, `tags[]` | Creates a markdown-formatted documentation page or architectural specification. |
-| `update_document` | `documentId`, `title`, `content` | Edits markdown documents with real-time preview and word counter. |
-| `generate_plan` | `goal`, `timeframeDays`, `teamSize`, `focusAreas[]` | AI engine generates a complete multi-tier sprint breakdown with milestones and tasks. |
-| `propose_changes` | `title`, `description`, `patch` | Generates a pending diff proposal requiring human modal review before execution. |
-| `apply_proposal` | `proposalId` | Commits approved proposal, records cryptographic snapshot, and updates workspace. |
-| `reject_proposal` | `proposalId` | Declines a pending proposal and leaves the current workspace untouched. |
-| `undo_changes` | *None* | Pops the most recent workspace snapshot from the stack and restores previous state. |
+| # | Tool Identifier | Input Parameters | Return Object | Operational Description |
+| :- | :--- | :--- | :--- | :--- |
+| **1** | `get_project_state` | `{}` | `WorkspaceState` | Serializes complete project: tasks, milestones, canvas nodes, markdown docs, and telemetry. |
+| **2** | `analyze_project` | `{}` | `AnalyticsSummary` | Computes velocity burndown, completion rates, bottleneck alerts, and team capacity. |
+| **3** | `create_task` | `title, priority, assignee, estimateDays, dueDate, tags` | `{ task: Task }` | Creates a new task with unique ID, ISO timestamps, default status `todo`, and relative tags. |
+| **4** | `update_task` | `taskId, status?, priority?, assignee?, title?, ...` | `{ task: Task }` | Updates any field on a task, automatically stamps `updatedAt`, and triggers reactive UI re-render. |
+| **5** | `delete_task` | `taskId` | `{ success: boolean }` | Safely removes task after taking an internal undo snapshot. |
+| **6** | `batch_create_tasks`| `tasks: TaskInput[]` | `{ tasks: Task[] }` | Atomically creates multiple tasks at once during roadmap generation. |
+| **7** | `archive_task` | `taskId, unarchive?` | `{ task: Task }` | Toggles archival state; removes clutter from active board without destroying records. |
+| **8** | `create_milestone` | `title, targetDate, description, deliverables[]` | `{ milestone: Milestone }` | Adds a strategic phase with target milestones and percentage completion meters. |
+| **9** | `update_milestone` | `milestoneId, status?, progress?, targetDate?` | `{ milestone: Milestone }`| Adjusts milestone status (`upcoming`, `in_progress`, `completed`) and deliverables. |
+| **10**| `create_canvas_node`| `type, label, x, y, color, content` | `{ node: CanvasNode }` | Adds an interactive 2D spatial card to the infinite concept canvas. |
+| **11**| `update_canvas_node`| `nodeId, x?, y?, label?, content?, color?` | `{ node: CanvasNode }` | Modifies position coordinates or text content of a canvas node. |
+| **12**| `delete_canvas_node`| `nodeId` | `{ success: boolean }` | Removes a canvas node and cleans up connected relationship edges. |
+| **13**| `create_document` | `title, content, tags[]` | `{ doc: Document }` | Creates a new technical markdown specification or engineering PRD. |
+| **14**| `update_document` | `documentId, title?, content?` | `{ doc: Document }` | Updates markdown document content with live word-count calculations. |
+| **15**| `generate_plan` | `goal, timeframeDays, teamSize, focusAreas[]` | `{ plan: PlanProposal }`| AI synthesizes a full multi-tier roadmap with milestones, tasks, and effort distributions. |
+| **16**| `propose_changes` | `title, description, patch[]` | `{ proposal: Proposal }`| Triggers the Visual Diff Proposal modal requiring human approval before mutation. |
+| **17**| `apply_proposal` | `proposalId` | `{ success: boolean }` | Captures an immutable snapshot, applies proposal patch atomically, and logs telemetry. |
+| **18**| `reject_proposal` | `proposalId` | `{ success: boolean }` | Declines proposal and discards pending patch with zero state modification. |
+| **19**| `undo_changes` | `{}` | `{ restored: boolean }` | Restores previous workspace snapshot from the stack (zero-data-loss rollback). |
 
-### Browser Agent Integration (`document.modelContext`)
+---
 
-External autonomous agents, headless browser automation scripts, or developer consoles can execute tools directly:
+### Executing Tools via Developer Console or Headless Agents
 
-```typescript
-// 1. Discover all registered tools and their schemas
+Any headless agent or browser automation script can query and control Forge via standard JavaScript:
+
+```javascript
+// Check all registered capabilities
 const tools = await window.document.modelContext.listTools();
-console.log("Registered WebMCP Tools:", tools.map(t => t.name));
+console.table(tools.map(t => ({ Name: t.name, Description: t.description })));
 
-// 2. Query real workspace state
-const state = await window.document.modelContext.execute("get_project_state", {});
+// Run automated health check
+const analysis = await window.document.modelContext.execute("analyze_project", {});
+console.log("Team Velocity:", analysis.velocity, "Bottlenecks:", analysis.bottlenecks);
 
-// 3. Create a task directly via WebMCP
-const result = await window.document.modelContext.execute("create_task", {
-  title: "Deploy Edge Reverse Proxy",
-  priority: "urgent",
-  assignee: "Founder A (Tech)",
-  estimateDays: 2,
-  dueDate: "2026-09-25",
-  tags: ["infrastructure", "edge", "security"]
+// Batch-create tasks from an external pipeline
+await window.document.modelContext.execute("batch_create_tasks", {
+  tasks: [
+    { title: "Implement Auth Middleware", priority: "urgent", assignee: "Founder A", estimateDays: 2 },
+    { title: "Design Landing Page Hero", priority: "high", assignee: "Founder B", estimateDays: 3 }
+  ]
 });
-
-console.log("Created Task ID:", result.task.id);
 ```
 
 ---
 
-## 🖥️ Workspace Views & Features
+## 🖥️ Workspace Views Deep Dive
 
-### 1. Kanban Board (with Horizontal Swimlanes)
-
-The Kanban Board provides a tactile, fluid drag-and-drop workflow with deep customization:
-
-- **Horizontal Swimlane Modes**:
-  - **Standard View**: Traditional four-column board (`To Do`, `In Progress`, `Review`, `Done`).
-  - **Project Phase Swimlanes**: Groups tasks into horizontal rows corresponding to active Milestones.
-  - **Urgency Level Swimlanes**: Groups tasks into horizontal rows by Priority (`Urgent`, `High`, `Medium`, `Low`).
-- **Interactive Capabilities**:
-  - **Subsequence Fuzzy Search**: Instant keyboard filtering by title, description, assignee, ID, or tag.
-  - **Visual Relative Timestamps**: Displays live "last modified" tags (e.g., `2m ago`, `3h ago`, `Yesterday`) with hover tooltips showing full date-time strings.
-  - **Inline Quick-Edit**: Click `Edit` or double-click to modify titles, estimates, and assignees directly on the card without modal context switching.
-  - **Subtask Checklist & Time Tracker**: Interactive checkboxes and timer buttons right on each card.
-  - **Archive Drawer**: Move completed clutter off the active board into an accessible archive vault.
+### 1. Kanban Board with 3-Mode Horizontal Swimlanes
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  HERO ROADMAP (KANBAN BOARD)                              [Fuzzy Search...] │
-│  Swimlanes: [Standard] [Project Phase] [Urgency Level]   [Archived] [+ New] │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  TO DO (3)        │ IN PROGRESS (2)   │ REVIEW (1)        │ DONE (4)        │
-│ ───────────────── │ ───────────────── │ ───────────────── │ ─────────────── │
-│ [URGENT] TASK-1   │ [HIGH] TASK-4     │ [MEDIUM] TASK-7   │ [DONE] TASK-2   │
-│ Deploy Auth Proxy │ Setup WebMCP Bus  │ E2E Integration   │ Seed Schemas    │
-│ ⏱️ 2h ago • 2d   │ ⏱️ 15m ago • 3d  │ ⏱️ Yesterday • 1d │ ⏱️ 1d ago • 1d │
-│ ───────────────── │ ───────────────── │ ───────────────── │ ─────────────── │
-│ [HIGH] TASK-3     │ [MEDIUM] TASK-5   │                   │ [DONE] TASK-6   │
-│ Design Token Grid │ Build Canvas Node │                   │ Setup CI Flow   │
-│ ⏱️ 4h ago • 1d   │ ⏱️ 30m ago • 2d  │                   │ ⏱️ 2d ago • 1d │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  SWIMLANE MODE: [Project Phase]                                         [🔍 Fuzzy Filter...]  [+ Task] │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  ▼ PHASE 1: CORE INFRASTRUCTURE (Progress: 66%  •  3 tasks  •  5 days estimated)                      │
+│  ┌───────────────────────┬───────────────────────┬───────────────────────┬──────────────────────────┐  │
+│  │ TO DO (1)             │ IN PROGRESS (1)       │ REVIEW (0)            │ DONE (1)                 │  │
+│  ├───────────────────────┼───────────────────────┼───────────────────────┼──────────────────────────┤  │
+│  │ [URGENT] TASK-1       │ [HIGH] TASK-3         │ (Empty)               │ [DONE] TASK-2            │  │
+│  │ Deploy Edge Proxy     │ WebMCP Bus Client     │                       │ Seed Schemas             │  │
+│  │ ⏱️ 5m ago  ·  2d      │ ⏱️ 1h ago  ·  2d      │                       │ ⏱️ 1d ago  ·  1d         │  │
+│  └───────────────────────┴───────────────────────┴───────────────────────┴──────────────────────────┘  │
+│  ▼ PHASE 2: LAUNCH & SCALE (Progress: 0%  •  2 tasks  •  6 days estimated)                            │
+│  ┌───────────────────────┬───────────────────────┬───────────────────────┬──────────────────────────┐  │
+│  │ TO DO (2)             │ IN PROGRESS (0)       │ REVIEW (0)            │ DONE (0)                 │  │
+│  │ ...                   │                       │                       │                          │  │
+│  └───────────────────────┴───────────────────────┴───────────────────────┴──────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+- **3 Dynamic Swimlane Modes**:
+  - **Standard Columns**: Flat 4-column layout (`To Do`, `In Progress`, `Review`, `Done`).
+  - **Project Phase Swimlanes**: Horizontal swimlanes dynamically grouped by active Milestones.
+  - **Urgency Level Swimlanes**: Horizontal swimlanes grouped by Priority (`Urgent`, `High`, `Medium`, `Low`).
+- **Tactile Card Controls**:
+  - Drag-and-drop between columns and across swimlanes.
+  - Inline title and estimate editing directly on the card.
+  - Checkbox subtask checklist with live completion ratio (`✓ 2/3`).
+  - Integrated stopwatch timer with start/stop toggle.
+  - Relative elapsed timestamp badge (`⏱️ 4m ago`) and priority color border accents.
 
 ---
 
-### 2. Structured Task List View
+### 2. Tabular Task List with Dynamic Columns
 
-Designed for rapid scanning, batch inspection, and dense information management:
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Status: [All (9)] [To Do (3)] [In Progress (2)] [Done (4)]      Priority: [All] [Urgent] [High]   [🔍 Filter tasks...] │
+├────┬──────────┬─────────────────────────────────────┬─────────────┬──────────┬──────────────┬─────────────┬────────────┤
+│ ST │ ID       │ TITLE & TAGS                        │ STATUS      │ PRIORITY │ ASSIGNEE     │ LAST MOD    │ ESTIMATE   │
+├────┼──────────┼─────────────────────────────────────┼─────────────┼──────────┼──────────────┼─────────────┼────────────┤
+│ [ ]│ TASK-1   │ Deploy Edge Reverse Proxy           │ To Do       │ 🔴 Urgent│ Founder A    │ ⏱️ 2m ago   │ 2 days     │
+│    │          │ #infrastructure #edge #security     │             │          │              │             │            │
+│ [ ]│ TASK-3   │ WebMCP Protocol Bus Listener        │ In Progress │ 🟠 High  │ Founder B    │ ⏱️ 15m ago  │ 3 days     │
+│    │          │ #webmcp #realtime #bus              │             │          │              │             │            │
+│ [x]│ TASK-2   │ Seed JSON Schema Fixtures           │ Done        │ 🟢 Medium│ Founder A    │ ⏱️ 1d ago   │ 1 day      │
+│    │          │ #database #schemas                  │             │          │              │             │            │
+└────┴──────────┴─────────────────────────────────────┴─────────────┴──────────┴──────────────┴─────────────┴────────────┘
+```
 
-- **Full-Text Fuzzy Filtering**: Powered by multi-word token matching.
-- **Dynamic Faceted Filters**: Filter by Status (`All`, `To Do`, `In Progress`, `Review`, `Done`, `Archived`) and Priority (`Urgent`, `High`, `Medium`, `Low`).
-- **Dedicated Columns**:
-  - Checkbox toggle for instantaneous status flip.
-  - Task Title, Description italic snippet, and `#tags`.
-  - Status badge and Priority pill.
-  - Assignee with avatar indicator.
-  - **Last Modified Timestamp** with clock icon and relative elapsed time.
-  - Estimated effort days and fast action controls (Archive, Delete).
+- **Full-Text Fuzzy Filtering**: Instant multi-token search across all columns simultaneously.
+- **Dedicated Last-Modified Column**: Live updated relative timestamps with tooltips displaying full formatted date-time.
+- **Fast Action Toolbar**: Quick batch archive, status toggle, and priority adjustments.
 
 ---
 
-### 3. Milestones & Phase Progress
+### 3. Milestones & Phase Progress Tracking
 
-Tracks multi-week strategic roadmaps with delivery indicators:
-
-- **Gantt-Style Progress Meters**: Visual percentage completion calculated deterministically from child task statuses.
-- **Phase Deliverables Breakdown**: Nested itemized milestones with target date badges.
-- **Health Indicators**: Dynamic warning badges for phases with approaching deadlines or incomplete urgent tasks.
+- **Gantt-Style Visual Timelines**: Clear delivery indicators and milestone dates.
+- **Calculated Completion Meters**: Deterministically computed from the ratio of completed child tasks.
+- **Phase Deliverables Checklist**: Interactive milestones with progress indicators.
 
 ---
 
 ### 4. 2D Interactive Concept Canvas
 
-An infinite ideation space combining spatial reasoning with structured project artifacts:
-
-- **Node Types**: System Concept, Architectural Decision, User Flow, Sticky Note, and Trigger Endpoint.
-- **Color Coding**: Visual categorization with custom border accents and typography.
-- **Spatial Coordinates**: Preserves `x` and `y` coordinates; synchronized with WebMCP tools (`create_canvas_node`, `update_canvas_node`).
+- **Free-Form Spatial Node Graph**: Arrange architecture concepts, sticky notes, and trigger events.
+- **Agent Integration**: Agents can generate and update nodes via `create_canvas_node` and `update_canvas_node`.
+- **Node Classification**: Visual styles for concepts, architectural decisions, and data pipelines.
 
 ---
 
-### 5. Markdown Document & PRD Vault
+### 5. Technical Markdown PRD & Docs Vault
 
-A dedicated technical documentation system:
-
-- **Markdown Rendering**: Formatted headers, code fences, blockquotes, checklists, and tables.
-- **Instant Save & Synchronization**: Stored as first-class workspace entities accessible to AI agents via `create_document` and `update_document`.
-- **Word & Character Telemetry**: Real-time document statistics for engineering specifications.
+- **Full Markdown Rendering**: Code blocks, markdown tables, callout blocks, and lists.
+- **Live Telemetry Bar**: Real-time word count, character count, and reading time estimation.
+- **Agent Accessible**: AI agents can read and write technical specifications via WebMCP.
 
 ---
 
-### 6. Live WebMCP Inspector
+### 6. Live WebMCP Protocol Inspector
 
-A developer and evaluator control center displaying real-time WebMCP protocol interactions:
-
-- **Schema Browser**: Expandable parameter trees and documentation for all 18 registered tools.
-- **Interactive Sandbox**: Manually execute any WebMCP tool with custom JSON arguments.
-- **Real-Time Telemetry Log**: Chronological stream of incoming tool invocations, caller sources, execution latencies (ms), and JSON payloads.
+- **Interactive Sandbox**: Manually execute any of the 18 WebMCP tools with custom JSON payloads.
+- **Schema Visualizer**: Expandable parameter trees documenting types, defaults, and requirements.
+- **Chronological Telemetry Stream**: Real-time log showing execution timestamps, caller sources, execution duration (ms), and return values.
 
 ---
 
 ### 7. 30-Day Task Velocity & Activity Analytics
 
-Accessible via the `Velocity` button in the top navigation bar or the Kanban summary card:
-
-- **Recharts Velocity Burndown**: Compares planned vs. completed task velocity across 30 days.
-- **Agent Invocation Breakdown**: Tracks human vs. autonomous agent contributions.
-- **Priority & Effort Distribution**: Visual charts breaking down sprint allocation across Urgent, High, and Medium work.
+- **Recharts Burndown Chart**: Visual comparison of planned sprint velocity versus actual completed work.
+- **Human vs. Agent Contribution Split**: Quantifies productivity contributions by source.
+- **Urgency Distribution**: Breakdown of urgent, high, medium, and low priority workloads.
 
 ---
 
-## 🚀 Productivity & Accessibility Systems
+## ♿ Productivity & Accessibility Systems
 
-### Fuzzy-Search Subsequence Engine
+### 3-Tier Global Font Scaling
 
-Forge includes a bespoke fuzzy search algorithm (`matchesTaskFuzzy`) built in `/src/utils/taskFilters.ts`:
+Forge features a global font scaling engine managed in `ThemeContext` and applied via CSS variables at the HTML root:
 
-- **Subsequence & Token Splitting**: Typing `"dep prx"` matches `"Deploy Edge Reverse Proxy"`.
-- **Cross-Field Indexing**: Simultaneously inspects `title`, `description`, `assignee`, `id`, and all `tags`.
-- **Instant Clear Controls**: Quick `✕` button to reset search filters with live match feedback (`Showing 3 of 10 tasks`).
+| Mode Identifier | Root Font Size | Target Screen & Use Case | Toggle Control |
+| :--- | :--- | :--- | :--- |
+| **`font-compact`** | `14px` (0.875rem) | 4K displays, dense sprint planning, high-information tables | `[A-]` in header |
+| **`font-comfortable`** | `16px` (1.000rem) | Standard displays, everyday balance of density and readability | `[A]` in header |
+| **`font-spacious`** | `18px` (1.125rem) | Presentations, accessibility needs, relaxed reading | `[A+]` in header |
 
-### Zen Mode (Distraction-Free Focus)
-
-Designed for deep focus sessions:
-
-- **One-Click Activation**: Toggle the **Zen Mode** button in the header navigation or trigger via command.
-- **Clean Workspace**: Automatically hides the sidebars, agent sidepanel, and secondary chrome, expanding the primary view to full viewport width.
-- **Floating HUD**: Elegant floating pill at the bottom indicating active status, with a 1-click exit and instant `Escape` key support.
-
-### Global 3-Tier Font Size Scaling
-
-Built directly into `ThemeContext` and responsive CSS variables:
-
-- **Compact (14px)**: High-density view optimal for data-heavy sprint reviews and 4K displays.
-- **Comfortable (16px)**: Standard balanced typography for everyday use.
-- **Spacious (18px)**: Enhanced readability and accessibility mode for presentation and low-strain reading.
-- **One-Touch Toggle**: Click the `A` button in the top navigation to cycle modes seamlessly with persistent `localStorage` memory.
-
-### Voice-First Agent Orchestration
-
-Forge features full hands-free voice control powered by the browser-native Web Speech API:
-
-- **Speech Recognition**: Listens and streams real-time speech-to-text directly into the agent input.
-- **Waveform Visualizer**: Responsive pulsating audio graphic indicating microphone active states.
-- **Speech Synthesis**: Speaks concise confirmations and summaries out loud when the agent finishes executing WebMCP tools.
-- **Accessibility Fallback**: Automatically degrades gracefully to standard keyboard input on unsupported browsers.
-
-### Diff Proposals & 1-Click Snapshot Rollbacks
-
-To prevent catastrophic agent hallucinations, destructive changes never mutate workspace state silently:
-
-1. **Diff Proposal Generation**: High-impact plans create a structured `DiffProposal`.
-2. **Visual Inspection Modal**: Displays before/after side-by-side card comparisons with green additions and red deletions.
-3. **Immutable Snapshot Stack**: Before any proposal is applied, the previous workspace state is pushed to an in-memory snapshot stack.
-4. **Instant Undo**: Hit `Undo` or `Ctrl+Z` to immediately roll back any applied changes with zero data loss.
-
-### Command Palette (Ctrl+K / Cmd+K)
-
-Press `Ctrl+K` or `Cmd+K` anywhere in the app to open the global command palette:
-
-- Search tasks, milestones, canvas nodes, and documents simultaneously.
-- Jump between views (`Kanban Board`, `Task List`, `Milestones`, `Canvas`, `Docs`, `Inspector`).
-- Trigger instant actions (`New Task`, `Export Snapshot`, `Toggle Zen Mode`, `Toggle Theme`).
-
----
-
-## 🏆 Judge & Evaluator Walkthrough
-
-To experience the full power of Forge in under 60 seconds, click the **"Hero Demo Walkthrough"** button in the top navigation bar:
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      3-STEP EVALUATOR HERO JOURNEY                          │
-│                                                                             │
-│   [ STEP 1: Plan Generation ]                                               │
-│   "Create a realistic two-week product launch plan for a 2-person team"     │
-│   ──► AI inspects current backlog via WebMCP                                │
-│   ──► Agent generates 3 Milestones and 8 balanced Tasks                     │
-│   ──► Visual Diff Proposal modal opens for human approval                   │
-│                                                                             │
-│   [ STEP 2: Intelligent Scope Reduction ]                                   │
-│   "This is too ambitious. Make it achievable for two people in 14 days"     │
-│   ──► Agent evaluates velocity capacity (2 people × 10 working days = 20d)  │
-│   ──► Strips non-critical features, re-allocates urgent tasks               │
-│   ──► Presents adjusted proposal with explicit before/after diffs           │
-│                                                                             │
-│   [ STEP 3: 1-Click Snapshot Undo ]                                         │
-│   "Revert changes back to initial state"                                    │
-│   ──► User clicks Undo button                                               │
-│   ──► Workspace instantly reverts via cryptographic state rollback          │
-│   ──► Zero leftover artifacts, zero data corruption                         │
-└─────────────────────────────────────────────────────────────────────────────┘
+```css
+/* Configured dynamically in index.css */
+html.font-compact { font-size: 14px; }
+html.font-comfortable { font-size: 16px; }
+html.font-spacious { font-size: 18px; }
 ```
 
 ---
 
-## ⌨️ Keyboard Shortcuts Cheatsheet
+### Visual Last-Modified Timestamps Engine
+
+Every state mutation in Forge—whether caused by human dragging, inline editing, subtask completion, or WebMCP tool execution—updates an ISO 8601 `updatedAt` timestamp.
+
+The utility `/src/utils/taskFilters.ts` formats this timestamp relative to the current time:
+
+```
+Elapsed < 1 min   ──► "Just now"
+Elapsed < 60 min  ──► "Xm ago"   (e.g., "12m ago")
+Elapsed < 24 hrs  ──► "Xh ago"   (e.g., "3h ago")
+Elapsed < 48 hrs  ──► "Yesterday"
+Elapsed >= 2 days ──► "Xd ago"   (e.g., "4d ago")
+```
+
+Hovering over any timestamp displays a native browser tooltip with the exact full date and time (e.g., `Last modified: Friday, September 11, 2026 at 10:45 AM`).
+
+---
+
+### Voice-First Web Speech Orchestration
+
+- **Browser-Native Web Speech**: Zero external dependencies, zero latency.
+- **Real-Time Visualizer**: Animated waveform indicating `Listening...` and `Processing...` states.
+- **Speech Synthesis (TTS)**: Spoken audio confirmation when agent actions complete.
+
+---
+
+### Visual Diff Proposal Modal
+
+When the agent proposes high-impact changes (e.g., reducing project scope), it cannot execute them without human approval:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ 🪟 PROPOSAL REVIEW: "14-Day Scope Cut & Sprint Re-Alignment"               [✕ Close]   │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ The AI Agent suggests removing 2 low-priority tasks and re-assigning urgent deadlines: │
+│                                                                                        │
+│   ❌ REMOVED FROM SCOPE:                                                               │
+│   • TASK-8: "Build Dark Mode Theme Playground" (Effort: 3 days, Priority: Low)        │
+│   • TASK-9: "Integrate Third-Party Webhook Relays" (Effort: 4 days, Priority: Low)    │
+│                                                                                        │
+│   🔄 ADJUSTED ESTIMATES:                                                               │
+│   • TASK-1: "Deploy Edge Reverse Proxy" (Estimated 3d ──► 2d)                          │
+│                                                                                        │
+│   📊 CAPACITY IMPACT: Total backlog reduced from 29 days ──► 18 days (Achievable!)     │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ [❌ Reject Proposal]                                              [✅ Approve & Apply] │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 1-Click Cryptographic Undo
+
+Before applying any approved proposal or destructive edit, Forge captures a snapshot:
+
+```typescript
+const previousState = JSON.parse(JSON.stringify(workspaceState));
+snapshotStack.push({
+  timestamp: new Date().toISOString(),
+  description: proposal.title,
+  state: previousState
+});
+```
+
+Clicking **`[↩️ Undo]`** pops the top snapshot and restores the exact previous workspace state with zero data corruption.
+
+---
+
+### Global Command Palette (Ctrl+K / Cmd+K)
+
+- Search all tasks, milestones, canvas notes, and documents simultaneously.
+- Jump directly between workspace views.
+- Trigger instant actions (`New Task`, `Toggle Zen Mode`, `Cycle Font Size`).
+
+---
+
+## 🏆 Evaluator & Judge Hero Demo Walkthrough
+
+Click the **"Hero Demo"** button in the top navigation header to run this interactive 3-step tour:
+
+```mermaid
+graph TD
+    Step1["⚡ STEP 1: Plan Generation<br/>Click 'Generate Launch Plan'<br/>──► AI synthesizes 3 Milestones & 8 Tasks"]
+    Step2["📉 STEP 2: Intelligent Scope Cut<br/>Click 'Reduce Scope for 2-Person Team'<br/>──► AI detects 20d capacity limit & cuts backlog"]
+    Step3["↩️ STEP 3: 1-Click Snapshot Undo<br/>Click 'Undo Scope Reduction'<br/>──► Workspace reverts instantly with zero data loss"]
+
+    Step1 --> Step2 --> Step3
+```
+
+1. **Step 1 — Plan Generation**:
+   The agent queries the current project state via WebMCP, identifies missing launch phases, and creates a realistic multi-tier plan with milestones, deliverables, and assigned tasks.
+2. **Step 2 — Intelligent Scope Reduction**:
+   The evaluator asks the agent to fit the plan into a 2-person, 14-day window. The agent calculates that 2 people working 10 business days have 20 person-days of capacity. It identifies non-critical features, generates a structured diff proposal, and presents the visual comparison modal.
+3. **Step 3 — 1-Click Undo**:
+   With one click, the evaluator reverts the proposal using Forge's snapshot stack, demonstrating complete safety and zero data loss.
+
+---
+
+## ⌨️ Keyboard Shortcuts Reference
 
 | Shortcut | Action | Scope |
 | :--- | :--- | :--- |
-| `Ctrl+K` / `Cmd+K` | Open Command Palette & Global Search | Global |
+| `Ctrl+K` / `Cmd+K` | Open Global Command Palette | Global |
 | `Ctrl+P` / `Cmd+P` | Open Pending Diff Proposal Modal | Global |
-| `Escape` | Exit Zen Mode / Close Modals & Drawers | Global |
-| `Enter` | Save Inline Task Edit / Submit Chat Prompt | Forms & Cards |
-| `Space` (when focused) | Toggle Task Completion Status | Task List & Kanban |
+| `Escape` | Exit Zen Mode / Dismiss Modals | Global |
+| `Enter` | Save Inline Task Edit / Send Chat Prompt | Forms & Cards |
+| `Space` (when focused) | Toggle Task Status (To Do ⟷ Done) | Kanban & Task List |
 
 ---
 
-## 📁 Directory Structure
+## 📂 Repository Architecture
 
 ```
-├── .env.example                  # Environment variable declarations (GEMINI_API_KEY)
-├── metadata.json                 # AI Studio Applet metadata and permissions
-├── package.json                  # Dependencies (React 19, Tailwind CSS v4, Lucide, Recharts)
-├── tsconfig.json                 # TypeScript strict configuration
-├── vite.config.ts                # Vite build configuration with Tailwind CSS v4 plugin
+forge/
+├── .env.example                       # Environment variables (GEMINI_API_KEY)
+├── metadata.json                      # AI Studio capabilities and frame permissions
+├── package.json                       # React 19, Tailwind CSS v4, Lucide, Recharts
+├── tsconfig.json                      # Strict TypeScript compiler options
+├── vite.config.ts                     # Vite build configuration with Tailwind plugin
 │
-├── public/                       # Static public assets
+├── public/                            # Static public assets and icons
 │
 └── src/
-    ├── main.tsx                  # React DOM entry point
-    ├── App.tsx                   # Master layout, Zen Mode, shortcuts & navigation orchestrator
-    ├── index.css                 # Tailwind CSS v4 entry point & font size mode variables
+    ├── main.tsx                       # React DOM root entry point
+    ├── App.tsx                        # Master layout, Zen Mode, shortcuts & navigation orchestrator
+    ├── index.css                      # Tailwind CSS v4 entry point & font size mode variables
     │
     ├── types/
-    │   └── forge.ts              # Core TypeScript interfaces: Task, Milestone, Proposal, WebMCP
+    │   └── forge.ts                   # Core TypeScript interfaces: Task, Milestone, Proposal, WebMCP
     │
     ├── context/
-    │   ├── WorkspaceContext.tsx  # Central state store, snapshot stack, and WebMCP registry
-    │   └── ThemeContext.tsx      # Dark/Light theme & Compact/Comfortable/Spacious font scaling
+    │   ├── WorkspaceContext.tsx       # Central state store, snapshot stack, and WebMCP registry
+    │   └── ThemeContext.tsx           # Dark/Light theme & Compact/Comfortable/Spacious font scaling
     │
     ├── utils/
-    │   └── taskFilters.ts        # Subsequence fuzzy search & relative time formatters
+    │   └── taskFilters.ts             # Subsequence fuzzy search & relative time formatters
     │
     └── components/
-        ├── Navigation.tsx        # Top header with view switcher, Zen toggle, theme & font controls
-        ├── AgentPanel.tsx        # Integrated AI copilot panel with Web Speech voice visualizer
-        ├── ProposalModal.tsx     # Visual diff inspector for approving/rejecting agent proposals
-        ├── CommandPaletteModal.tsx # Global Ctrl+K full-text search and quick-action menu
+        ├── Navigation.tsx             # Top header with view switcher, Zen toggle, theme & font controls
+        ├── AgentPanel.tsx             # Integrated AI copilot panel with Web Speech voice visualizer
+        ├── ProposalModal.tsx          # Visual diff inspector for approving/rejecting agent proposals
+        ├── CommandPaletteModal.tsx    # Global Ctrl+K full-text search and quick-action menu
         ├── DashboardAnalyticsOverlay.tsx # 30-day task velocity and agent burndown visualizer
-        ├── TaskCardModal.tsx     # Rich modal with subtask checklists and custom date picker
-        ├── TaskTimerTracker.tsx  # Live task time tracking widget
-        ├── DashboardSummary.tsx  # Top Kanban sprint metrics summary card
+        ├── TaskCardModal.tsx          # Rich modal with subtask checklists and custom date picker
+        ├── TaskTimerTracker.tsx       # Live task time tracking widget
+        ├── DashboardSummary.tsx       # Top Kanban sprint metrics summary card
         │
         └── views/
             ├── KanbanBoardView.tsx    # Drag-and-drop board with horizontal swimlanes & fuzzy search
@@ -502,35 +658,35 @@ To experience the full power of Forge in under 60 seconds, click the **"Hero Dem
 
 ---
 
-## 🛠️ Getting Started & Development
+## 🚀 Getting Started & Local Development
 
 ### Prerequisites
 
 - **Node.js**: Version 18.0.0 or higher
 - **npm** or **bun**: Modern package manager
 
-### Installation
+### Setup Instructions
 
-1. Clone the repository and install project dependencies:
+1. **Clone and Install Dependencies**:
    ```bash
    git clone https://github.com/your-org/forge.git
    cd forge
    npm install
    ```
 
-2. Configure environment variables:
+2. **Configure Environment Variables**:
    ```bash
    cp .env.example .env
    # Add your Gemini API key (optional for server-side AI features):
    # GEMINI_API_KEY=your_key_here
    ```
 
-3. Launch the development server (runs on port 3000):
+3. **Start Development Server** (Binds to `http://localhost:3000`):
    ```bash
    npm run dev
    ```
 
-4. Build and verify type safety:
+4. **Verify TypeScript & Build**:
    ```bash
    npm run lint
    npm run build
@@ -538,14 +694,12 @@ To experience the full power of Forge in under 60 seconds, click the **"Hero Dem
 
 ---
 
-## 🔒 Security & Deterministic Safety
+## 🛡️ Security, Safety & Governance Guarantees
 
-Forge is engineered with strict defensive boundaries:
-
-1. **No Silent State Mutations**: AI agents cannot delete or overwrite workspace records without generating a human-auditable `DiffProposal`.
-2. **Immutable Snapshot Ledger**: Every approved mutation automatically captures a snapshot before applying patches. Users can revert mistakes instantly with 1-click **Undo**.
-3. **Client-Side Protocol Sandbox**: The `document.modelContext` tool interface runs inside the browser container, strictly validating all payloads against JSON Schema definitions.
-4. **Secure API Handling**: Secret keys (such as `GEMINI_API_KEY`) remain strictly server-side and are never transmitted to client browser bundles.
+1. **No Silent Mutations**: High-impact agent actions are staged into a `DiffProposal` that requires explicit human modal confirmation.
+2. **Immutable Snapshot Stack**: Before any state patch is committed, the previous workspace state is cloned and stored in memory. The human can click `Undo` at any time.
+3. **Browser Protocol Sandbox**: External callers communicating via `window.document.modelContext` are strictly bound to validated JSON Schemas.
+4. **Secret Isolation**: All API credentials (such as `GEMINI_API_KEY`) run server-side and are never leaked to client bundles.
 
 ---
 
