@@ -111,7 +111,7 @@ Below is an exact visual ASCII schematic of Forge's dual-user interface:
 ├───────────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────┤
 │                                     PRIMARY WORKSPACE CANVAS                                      │     🤖 AGENT COPILOT    │
 │                                                                                                   ├─────────────────────────┤
-│  🔍 [Fuzzy Search: "dep prx"            ✕]  Group: [Standard] [Phase] [Urgency]  [+ New Task]     │ 🎙️ Voice: [Tap to Talk] │
+│  🔍 [Fuzzy Search: "dep prx"            ✕]  Group: [Standard] [Phase] [Urgency]  [+ New Task]     │ 🎙️ Voice: [Tap to Talk]|│
 │  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐  │  "I need an emergency  │
 │  │ ⚡ Active Filter: Showing 2 of 9 active tasks matching "dep prx"             [Clear Filter] │  │  scope reduction plan" │
 │  └─────────────────────────────────────────────────────────────────────────────────────────────┘  │                         │
