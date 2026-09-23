@@ -147,5 +147,83 @@ export function createProjectTools(service: WorkspaceService): WebMCPToolDefinit
         return service.searchWorkspace(input);
       },
     },
+    {
+      name: 'save_workspace_snapshot',
+      description: 'Persist the entire workspace configuration (tasks, milestones, documents, cards) into a named JSON snapshot stored in LocalStorage.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Descriptive title for this saved project snapshot' },
+          description: { type: 'string', description: 'Optional explanation of why this configuration was saved' },
+          tags: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Optional tags to categorize this snapshot (e.g. ["sprint-1", "pre-audit"])',
+          },
+        },
+        required: ['name'],
+      },
+      execute: async (input) => {
+        const schemaValidation = validateSchema(
+          {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              description: { type: 'string' },
+              tags: { type: 'array', items: { type: 'string' } },
+            },
+            required: ['name'],
+          },
+          input
+        );
+        if (!schemaValidation.valid) {
+          return validationError(schemaValidation.error!);
+        }
+        return service.saveSnapshotToStorage(input);
+      },
+    },
+    {
+      name: 'list_workspace_snapshots',
+      description: 'List all saved workspace snapshots stored in LocalStorage with metadata and resource counts.',
+      inputSchema: {
+        type: 'object',
+        properties: {},
+      },
+      execute: async () => {
+        return service.listSnapshotsFromStorage();
+      },
+    },
+    {
+      name: 'restore_workspace_snapshot',
+      description: 'Restore the entire project configuration and views from a previously saved LocalStorage snapshot ID.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          snapshotId: { type: 'string', description: 'ID of the snapshot to restore' },
+          createBackupFirst: {
+            type: 'boolean',
+            description: 'Whether to create an automatic safety backup of current workspace state before restoring (default: true)',
+          },
+        },
+        required: ['snapshotId'],
+      },
+      execute: async (input) => {
+        const schemaValidation = validateSchema(
+          {
+            type: 'object',
+            properties: {
+              snapshotId: { type: 'string' },
+              createBackupFirst: { type: 'boolean' },
+            },
+            required: ['snapshotId'],
+          },
+          input
+        );
+        if (!schemaValidation.valid) {
+          return validationError(schemaValidation.error!);
+        }
+        return service.restoreSnapshotFromStorage(input);
+      },
+    },
   ];
 }

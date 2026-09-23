@@ -26,6 +26,9 @@ export const WEBMCP_TOOL_CATEGORIES: ToolCategory[] = [
       'export_workspace_state',
       'import_workspace_state',
       'search_workspace',
+      'save_workspace_snapshot',
+      'list_workspace_snapshots',
+      'restore_workspace_snapshot',
     ],
   },
   {

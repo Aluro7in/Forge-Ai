@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Sun,
   Moon,
+  Camera,
 } from 'lucide-react';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useTheme } from '../context/ThemeContext';
@@ -32,6 +33,7 @@ interface CommandPaletteModalProps {
   onClose: () => void;
   onNavigateView: (view: ActiveView) => void;
   onOpenProposalModal: () => void;
+  onOpenSnapshotManager?: () => void;
 }
 
 export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
@@ -39,6 +41,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onClose,
   onNavigateView,
   onOpenProposalModal,
+  onOpenSnapshotManager,
 }) => {
   const { workspaceService, project, tasks, milestones, documents } = useWorkspace();
   const { theme, toggleTheme } = useTheme();
@@ -81,6 +84,18 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   // Quick Action Commands
   const quickCommands = useMemo(() => {
     const commands = [
+      {
+        id: 'cmd-snapshots',
+        type: 'command' as const,
+        title: 'Workspace Snapshots (LocalStorage)',
+        subtitle: 'Save, manage, export, and restore complete project configurations',
+        shortcut: 'Ctrl+Shift+S',
+        icon: Camera,
+        action: () => {
+          onClose();
+          onOpenSnapshotManager?.();
+        },
+      },
       {
         id: 'cmd-proposal',
         type: 'command' as const,

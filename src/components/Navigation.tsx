@@ -20,6 +20,7 @@ import {
   Maximize2,
   Minimize2,
   Type,
+  Camera,
 } from 'lucide-react';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useTheme } from '../context/ThemeContext';
@@ -33,6 +34,7 @@ interface NavigationProps {
   onOpenHelp: () => void;
   onOpenSearch?: () => void;
   onOpenDashboardOverlay?: () => void;
+  onOpenSnapshotManager?: () => void;
   onToggleAgentPanel: () => void;
   isAgentPanelOpen: boolean;
   isZenMode?: boolean;
@@ -46,12 +48,13 @@ export const Navigation: React.FC<NavigationProps> = ({
   onOpenHelp,
   onOpenSearch,
   onOpenDashboardOverlay,
+  onOpenSnapshotManager,
   onToggleAgentPanel,
   isAgentPanelOpen,
   isZenMode = false,
   onToggleZenMode,
 }) => {
-  const { project, snapshots, undoLastChange, registeredTools, resetToInitialSeed } = useWorkspace();
+  const { project, snapshots, savedSnapshots, undoLastChange, registeredTools, resetToInitialSeed } = useWorkspace();
   const { theme, toggleTheme, fontSizeMode, cycleFontSizeMode } = useTheme();
 
   const navItems: { id: ActiveView; label: string; icon: React.FC<{ className?: string }> }[] = [
@@ -175,6 +178,21 @@ export const Navigation: React.FC<NavigationProps> = ({
               </span>
             )}
           </button>
+
+          {/* LocalStorage Saved Snapshots */}
+          {onOpenSnapshotManager && (
+            <button
+              onClick={onOpenSnapshotManager}
+              className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-800 transition cursor-pointer"
+              title={`Workspace Snapshots (${savedSnapshots.length} saved in LocalStorage)`}
+            >
+              <Camera className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="hidden sm:inline font-medium">Snapshots</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-mono font-bold">
+                {savedSnapshots.length}
+              </span>
+            </button>
+          )}
 
           {/* 30D Velocity */}
           {onOpenDashboardOverlay && (

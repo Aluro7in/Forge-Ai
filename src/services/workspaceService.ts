@@ -23,6 +23,11 @@ import {
   INITIAL_DOCUMENTS,
   INITIAL_CARDS,
 } from '../data/seed';
+import {
+  buildSnapshotRecord,
+  saveSnapshotToStorage as persistSnapshot,
+  loadStoredSnapshots,
+} from './snapshotStorageService';
 
 export interface WorkspaceStateAccessor {
   getProject: () => Project;
@@ -109,6 +114,130 @@ export class WorkspaceService {
       message: `Workspace successfully restored to snapshot: "${targetSnapshot.label}"`,
       affectedObjects: [
         { type: 'snapshot', id: targetSnapshot.id, title: targetSnapshot.label },
+      ],
+    };
+  }
+
+  // --- LocalStorage Persistent Snapshot Operations ---
+
+  public saveSnapshotToStorage(input: {
+    name: string;
+    description?: string;
+    tags?: string[];
+  }): ToolResult & {
+    snapshotId?: string;
+    stats?: any;
+    affectedObjects?: AffectedObject[];
+  } {
+    const project = this.accessor.getProject();
+    const tasks = this.accessor.getTasks();
+    const milestones = this.accessor.getMilestones();
+    const documents = this.accessor.getDocuments();
+    const cards = this.accessor.getCards();
+
+    const name = input?.name?.trim() || `Snapshot ${new Date().toLocaleDateString()}`;
+    const snap = buildSnapshotRecord({
+      name,
+      description: input?.description,
+      project,
+      tasks,
+      milestones,
+      documents,
+      cards,
+      tags: input?.tags || ['agent-created'],
+    });
+
+    const res = persistSnapshot(snap);
+    if (!res.success) {
+      return {
+        success: false,
+        error: res.error || 'Failed to save snapshot to LocalStorage.',
+        code: 'INTERNAL_ERROR',
+      };
+    }
+
+    return {
+      success: true,
+      snapshotId: snap.id,
+      stats: snap.stats,
+      affectedObjects: [{ type: 'project', id: project.id, title: `Snapshot "${snap.name}" saved` }],
+    };
+  }
+
+  public listSnapshotsFromStorage(): ToolResult & {
+    snapshots?: Array<{
+      id: string;
+      name: string;
+      description?: string;
+      createdAt: string;
+      isAutoBackup?: boolean;
+      tasksCount: number;
+      milestonesCount: number;
+      docsCount: number;
+      formattedSize: string;
+    }>;
+  } {
+    const records = loadStoredSnapshots();
+    return {
+      success: true,
+      snapshots: records.map((r) => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        createdAt: r.createdAt,
+        isAutoBackup: r.isAutoBackup,
+        tasksCount: r.stats?.totalTasks ?? r.data?.tasks?.length ?? 0,
+        milestonesCount: r.stats?.milestoneCount ?? r.data?.milestones?.length ?? 0,
+        docsCount: r.stats?.documentCount ?? r.data?.documents?.length ?? 0,
+        formattedSize: r.stats?.formattedSize ?? '12 KB',
+      })),
+    };
+  }
+
+  public restoreSnapshotFromStorage(input: { snapshotId: string; createBackupFirst?: boolean }): ToolResult & {
+    restoredCounts?: { tasks: number; milestones: number; documents: number; cards: number };
+    affectedObjects?: AffectedObject[];
+  } {
+    if (!input || !input.snapshotId) {
+      return {
+        success: false,
+        error: 'Missing required field "snapshotId" to restore snapshot.',
+        code: 'VALIDATION_ERROR',
+      };
+    }
+
+    const records = loadStoredSnapshots();
+    const target = records.find((r) => r.id === input.snapshotId);
+    if (!target) {
+      return {
+        success: false,
+        error: `Snapshot with ID "${input.snapshotId}" was not found in LocalStorage.`,
+        code: 'NOT_FOUND',
+      };
+    }
+
+    // Auto-backup before restoring if requested
+    if (input.createBackupFirst !== false) {
+      this.takeSnapshot(`Auto-backup before restoring ${target.name}`);
+    }
+
+    // Restore state
+    this.accessor.setProject(JSON.parse(JSON.stringify(target.data.project)));
+    this.accessor.setTasks(JSON.parse(JSON.stringify(target.data.tasks)));
+    this.accessor.setMilestones(JSON.parse(JSON.stringify(target.data.milestones)));
+    this.accessor.setDocuments(JSON.parse(JSON.stringify(target.data.documents)));
+    this.accessor.setCards(JSON.parse(JSON.stringify(target.data.cards)));
+
+    return {
+      success: true,
+      restoredCounts: {
+        tasks: target.data.tasks.length,
+        milestones: target.data.milestones.length,
+        documents: target.data.documents.length,
+        cards: target.data.cards.length,
+      },
+      affectedObjects: [
+        { type: 'project', id: target.data.project.id, title: `Restored to "${target.name}"` },
       ],
     };
   }

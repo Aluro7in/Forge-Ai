@@ -11,6 +11,21 @@ import {
   WebMCPToolDefinition,
 } from '../types/forge';
 import {
+  WorkspaceSnapshotRecord,
+  SnapshotViewConfig,
+  WorkspaceViewId,
+} from '../types/snapshot';
+import {
+  loadStoredSnapshots,
+  saveSnapshotToStorage,
+  deleteSnapshotFromStorage,
+  updateSnapshotMetadata,
+  buildSnapshotRecord,
+  exportSnapshotAsJSON,
+  exportAllSnapshotsAsJSON,
+  importSnapshotFromJSONText,
+} from '../services/snapshotStorageService';
+import {
   INITIAL_PROJECT,
   INITIAL_TASKS,
   INITIAL_MILESTONES,
@@ -20,7 +35,7 @@ import {
 import { initializeWebMCP, subscribeWebMCP } from '../webmcp/context';
 import { WorkspaceService, WorkspaceStateAccessor } from '../services/workspaceService';
 import { buildAllWebMCPTools } from '../webmcp/registry';
-import { notifyChangesSaved } from './ToastContext';
+import { notifyChangesSaved, notifyToast } from './ToastContext';
 
 interface WorkspaceContextType {
   project: Project;
@@ -41,6 +56,35 @@ interface WorkspaceContextType {
   registeredTools: WebMCPToolDefinition[];
   isAgentThinking: boolean;
   setIsAgentThinking: (thinking: boolean) => void;
+  workspaceService: WorkspaceService;
+
+  // LocalStorage Saved Snapshots
+  savedSnapshots: WorkspaceSnapshotRecord[];
+  saveWorkspaceSnapshot: (
+    name: string,
+    description?: string,
+    options?: {
+      activeView?: WorkspaceViewId;
+      viewConfig?: Partial<SnapshotViewConfig>;
+      isAutoBackup?: boolean;
+      tags?: string[];
+    }
+  ) => WorkspaceSnapshotRecord;
+  restoreWorkspaceSnapshot: (
+    snapshotId: string,
+    options?: {
+      createBackupFirst?: boolean;
+      switchView?: boolean;
+    }
+  ) => { success: boolean; snapshot?: WorkspaceSnapshotRecord; error?: string };
+  deleteWorkspaceSnapshot: (snapshotId: string) => boolean;
+  updateWorkspaceSnapshotMetadata: (
+    snapshotId: string,
+    updates: { name?: string; description?: string; tags?: string[] }
+  ) => boolean;
+  exportWorkspaceSnapshot: (snapshotId: string) => void;
+  exportAllWorkspaceSnapshots: () => void;
+  importWorkspaceSnapshot: (jsonText: string) => { success: boolean; snapshot?: WorkspaceSnapshotRecord; error?: string };
 
   // Domain Actions
   applyProposal: (proposalId: string) => Promise<boolean>;
@@ -63,6 +107,9 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [proposals, setProposals] = useState<ChangeProposal[]>([]);
   const [activeProposal, setActiveProposal] = useState<ChangeProposal | null>(null);
   const [snapshots, setSnapshots] = useState<WorkspaceSnapshot[]>([]);
+  const [savedSnapshots, setSavedSnapshots] = useState<WorkspaceSnapshotRecord[]>(() => {
+    return loadStoredSnapshots();
+  });
   const [registeredTools, setRegisteredTools] = useState<WebMCPToolDefinition[]>([]);
   const [isAgentThinking, setIsAgentThinking] = useState<boolean>(false);
 
@@ -257,6 +304,191 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     throw new Error('WebMCP document.modelContext not available in this environment');
   }, []);
 
+  const saveWorkspaceSnapshot = useCallback(
+    (
+      name: string,
+      description?: string,
+      options?: {
+        activeView?: WorkspaceViewId;
+        viewConfig?: Partial<SnapshotViewConfig>;
+        isAutoBackup?: boolean;
+        tags?: string[];
+      }
+    ): WorkspaceSnapshotRecord => {
+      const snap = buildSnapshotRecord({
+        name,
+        description,
+        project: stateRef.current.project,
+        tasks: stateRef.current.tasks,
+        milestones: stateRef.current.milestones,
+        documents: stateRef.current.documents,
+        cards: stateRef.current.cards,
+        activeView: options?.activeView,
+        viewConfig: options?.viewConfig,
+        isAutoBackup: options?.isAutoBackup ?? false,
+        tags: options?.tags,
+      });
+
+      const res = saveSnapshotToStorage(snap);
+      if (res.success) {
+        setSavedSnapshots(res.snapshots);
+        notifyToast({
+          type: 'success',
+          title: 'Snapshot Saved',
+          message: `Workspace configuration "${snap.name}" (${snap.stats.formattedSize}) saved to LocalStorage.`,
+        });
+      } else {
+        notifyToast({
+          type: 'error',
+          title: 'Snapshot Save Failed',
+          message: res.error || 'Failed to save snapshot to LocalStorage.',
+        });
+      }
+      return snap;
+    },
+    []
+  );
+
+  const restoreWorkspaceSnapshot = useCallback(
+    (
+      snapshotId: string,
+      options?: {
+        createBackupFirst?: boolean;
+        switchView?: boolean;
+      }
+    ): { success: boolean; snapshot?: WorkspaceSnapshotRecord; error?: string } => {
+      const target = savedSnapshots.find((s) => s.id === snapshotId);
+      if (!target) {
+        notifyToast({
+          type: 'error',
+          title: 'Restore Failed',
+          message: `Snapshot ID "${snapshotId}" was not found in LocalStorage.`,
+        });
+        return { success: false, error: 'Snapshot not found' };
+      }
+
+      // Auto-backup current state before restoring if requested
+      if (options?.createBackupFirst !== false) {
+        const backupName = `Auto-backup (before: ${target.name})`;
+        const backupSnap = buildSnapshotRecord({
+          name: backupName,
+          description: `Automatic recovery checkpoint created before restoring snapshot "${target.name}".`,
+          project: stateRef.current.project,
+          tasks: stateRef.current.tasks,
+          milestones: stateRef.current.milestones,
+          documents: stateRef.current.documents,
+          cards: stateRef.current.cards,
+          isAutoBackup: true,
+          tags: ['auto-backup', 'pre-restore'],
+        });
+        const backupRes = saveSnapshotToStorage(backupSnap);
+        if (backupRes.success) {
+          setSavedSnapshots(backupRes.snapshots);
+        }
+      }
+
+      // Restore workspace entities
+      setProject(JSON.parse(JSON.stringify(target.data.project)));
+      setTasks(JSON.parse(JSON.stringify(target.data.tasks)));
+      setMilestones(JSON.parse(JSON.stringify(target.data.milestones)));
+      setDocuments(JSON.parse(JSON.stringify(target.data.documents)));
+      setCards(JSON.parse(JSON.stringify(target.data.cards)));
+      setActiveProposal(null);
+
+      notifyToast({
+        type: 'success',
+        title: 'Snapshot Restored',
+        message: `Restored workspace configuration "${target.name}" (${target.stats.totalTasks} tasks, ${target.stats.milestoneCount} milestones).`,
+        durationMs: 4000,
+      });
+
+      return { success: true, snapshot: target };
+    },
+    [savedSnapshots]
+  );
+
+  const deleteWorkspaceSnapshot = useCallback((snapshotId: string): boolean => {
+    const res = deleteSnapshotFromStorage(snapshotId);
+    if (res.success) {
+      setSavedSnapshots(res.snapshots);
+      notifyToast({
+        type: 'info',
+        title: 'Snapshot Deleted',
+        message: 'The snapshot has been removed from LocalStorage.',
+      });
+      return true;
+    } else {
+      notifyToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: res.error || 'Failed to remove snapshot.',
+      });
+      return false;
+    }
+  }, []);
+
+  const updateWorkspaceSnapshotMetadata = useCallback(
+    (snapshotId: string, updates: { name?: string; description?: string; tags?: string[] }): boolean => {
+      const res = updateSnapshotMetadata(snapshotId, updates);
+      if (res.success) {
+        setSavedSnapshots(res.snapshots);
+        notifyToast({
+          type: 'success',
+          title: 'Snapshot Updated',
+          message: 'Snapshot details have been updated in LocalStorage.',
+        });
+        return true;
+      }
+      return false;
+    },
+    []
+  );
+
+  const exportWorkspaceSnapshot = useCallback(
+    (snapshotId: string) => {
+      const target = savedSnapshots.find((s) => s.id === snapshotId);
+      if (target) {
+        exportSnapshotAsJSON(target);
+        notifyToast({
+          type: 'info',
+          title: 'Exporting JSON',
+          message: `Downloading "${target.name}.json"...`,
+        });
+      }
+    },
+    [savedSnapshots]
+  );
+
+  const exportAllWorkspaceSnapshots = useCallback(() => {
+    exportAllSnapshotsAsJSON();
+    notifyToast({
+      type: 'info',
+      title: 'Exporting All Snapshots',
+      message: `Downloading archive of ${savedSnapshots.length} snapshots...`,
+    });
+  }, [savedSnapshots.length]);
+
+  const importWorkspaceSnapshot = useCallback((jsonText: string) => {
+    const res = importSnapshotFromJSONText(jsonText);
+    if (res.success && res.snapshot) {
+      const updatedList = loadStoredSnapshots();
+      setSavedSnapshots(updatedList);
+      notifyToast({
+        type: 'success',
+        title: 'Snapshot Imported',
+        message: `Successfully imported "${res.snapshot.name}" (${res.snapshot.stats.totalTasks} tasks) into LocalStorage.`,
+      });
+      return { success: true, snapshot: res.snapshot };
+    } else {
+      notifyToast({
+        type: 'error',
+        title: 'Import Failed',
+        message: res.error || 'Could not parse snapshot JSON.',
+      });
+      return { success: false, error: res.error };
+    }
+  }, []);
+
   return (
     <WorkspaceContext.Provider
       value={{
@@ -275,9 +507,18 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         activeProposal,
         setActiveProposal,
         snapshots,
+        savedSnapshots,
+        saveWorkspaceSnapshot,
+        restoreWorkspaceSnapshot,
+        deleteWorkspaceSnapshot,
+        updateWorkspaceSnapshotMetadata,
+        exportWorkspaceSnapshot,
+        exportAllWorkspaceSnapshots,
+        importWorkspaceSnapshot,
         registeredTools,
         isAgentThinking,
         setIsAgentThinking,
+        workspaceService,
         applyProposal,
         rejectProposal,
         undoLastChange,

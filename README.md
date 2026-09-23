@@ -49,6 +49,7 @@
    - [6. Live WebMCP Protocol Inspector](#6-live-webmcp-protocol-inspector)
    - [7. 30-Day Task Velocity & Activity Analytics](#7-30-day-task-velocity--activity-analytics)
 8. [♿ Productivity & Accessibility Systems](#-productivity--accessibility-systems)
+   - [Workspace Snapshots (LocalStorage Time Machine)](#workspace-snapshots-localstorage-time-machine)
    - [3-Tier Global Font Scaling (`compact`, `comfortable`, `spacious`)](#3-tier-global-font-scaling)
    - [Visual Last-Modified Timestamps Engine](#visual-last-modified-timestamps-engine)
    - [Voice-First Web Speech Orchestration](#voice-first-web-speech-orchestration)
@@ -92,6 +93,7 @@ Most project tools force humans to do 100% of the manual clicking, dragging, and
 
 | Feature | Category | Description | Visual Impact |
 | :--- | :--- | :--- | :--- |
+| **Workspace Snapshots** | *State Persistence* | Complete JSON snapshot engine storing all views, tasks, milestones, canvas cards, and documents in browser `localStorage`. | Persistent `Snapshots (N)` toolbar button, quick-save bar, auto-backup before restore, JSON export/import. |
 | **Fuzzy-Search Filter** | *Search & Discovery* | Multi-token subsequence matching across task titles, descriptions, assignees, IDs, and `#tags`. | Live counter pill (`Showing 3 of 10 tasks`), real-time highlights, instant `✕` clear. |
 | **Zen Mode** | *Focus & Productivity* | One-click distraction-free toggle hiding navigation sidebars, agent sidepanel, and chrome. | Full-width workspace, floating HUD status bar, instant exit via `Esc` or button. |
 | **3-Tier Font Size Mode** | *Accessibility* | Global font scaling context switching between **Compact (14px)**, **Comfortable (16px)**, and **Spacious (18px)**. | Persistent `localStorage` toggle with `Type` icon indicator (`A-`, `A`, `A+`). |
@@ -307,24 +309,115 @@ Zen Mode eliminates visual noise so you can focus on pure execution:
 └────────────────────────────────────────────────────────┘          └────────────────────────────────────────────────────────┘
 ```
 
+```mermaid
+flowchart TD
+    subgraph UI [User Navigation & Chrome]
+        Nav[Navigation Header Bar]
+        Side[AI Agent Sidepanel]
+        Shortcuts[Keyboard Shortcut: Ctrl+Shift+S]
+    end
+
+    subgraph Modal [Snapshot Manager Modal]
+        LiveCard[Live Workspace State Indicator]
+        Form[Name, Description & Tags Input]
+        List[Saved Snapshots Browser]
+        Diff[Inspect Breakdown & Entity Drawer]
+        ImportExport[JSON Import / Export Engine]
+    end
+
+    subgraph Service [Snapshot Storage Service]
+        Serializer[Deep JSON Serializer]
+        StatsCalc[Stats & Metric Analyzer]
+        Validator[Schema & Integrity Validator]
+        Storage[Browser LocalStorage: forge_workspace_snapshots_v1]
+    end
+
+    subgraph RestoreSafety [Restore Safety Guarantee]
+        AutoBackup[Automatic Safety Backup Snapshot]
+        StateApply[Atomic React State Setter]
+        ViewSwitch[Auto-Switch to Saved View]
+    end
+
+    Nav -->|Click 'Snapshots'| Modal
+    Shortcuts -->|Trigger| Modal
+    Side -->|save_workspace_snapshot| Service
+
+    Form -->|Save Snapshot| Serializer
+    Serializer --> StatsCalc
+    StatsCalc --> Storage
+    Storage --> List
+
+    List -->|Restore Clicked| AutoBackup
+    AutoBackup --> StateApply
+    StateApply --> ViewSwitch
+    ImportExport <-->|Export/Import File| Storage
+```
+
 ---
 
-## 🛠️ The 18 WebMCP Tools Catalog
+### LocalStorage Snapshot Schema & Data Structure
+
+Each snapshot is a standalone, portable JSON object preserving the complete configuration of all workspace views:
+
+```json
+{
+  "id": "snap_1727063258_a8b9c",
+  "projectId": "proj-dual-user-forge",
+  "projectName": "Forge Autonomous Workspace",
+  "name": "Sprint 1 MVP Baseline",
+  "description": "Captured prior to removing non-essential dark mode and auth tasks",
+  "createdAt": "2026-09-22T21:40:00.000Z",
+  "updatedAt": "2026-09-22T21:40:00.000Z",
+  "version": "1.0.0",
+  "tags": ["baseline", "sprint-1", "pre-audit"],
+  "isAutoBackup": false,
+  "viewConfig": {
+    "activeView": "board",
+    "swimlaneMode": "urgency",
+    "theme": "dark",
+    "fontSizeMode": "comfortable"
+  },
+  "stats": {
+    "totalTasks": 9,
+    "tasksByStatus": { "todo": 3, "in_progress": 2, "review": 0, "done": 4, "archived": 0 },
+    "tasksByPriority": { "urgent": 2, "high": 3, "medium": 3, "low": 1 },
+    "totalEstimateDays": 14,
+    "completedEstimateDays": 6,
+    "completionPercentage": 44,
+    "milestoneCount": 3,
+    "documentCount": 2,
+    "cardCount": 4,
+    "byteSize": 14820,
+    "formattedSize": "14.5 KB"
+  },
+  "data": {
+    "project": { "id": "proj-dual-user-forge", "name": "Forge Autonomous Workspace", ... },
+    "tasks": [ ... ],
+    "milestones": [ ... ],
+    "documents": [ ... ],
+    "cards": [ ... ]
+  }
+}
+```
+
+---
+
+## 🛠️ The 21 WebMCP Tools Catalog
 
 Every tool is strictly registered on `window.document.modelContext` with typed input and output schemas:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       18 REGISTERED WEBMCP TOOLS                                        │
+│                                       21 REGISTERED WEBMCP TOOLS                                        │
 ├──────────────────────────┬──────────────────────────┬──────────────────────────┬────────────────────────┤
 │ 🔍 QUERY & ANALYSIS      │ 📋 TASK LIFECYCLE        │ 🗺️ ROADMAP & CANVAS     │ 🛡️ SAFETY & GOVERNANCE │
 ├──────────────────────────┼──────────────────────────┼──────────────────────────┼────────────────────────┤
 │ • get_project_state      │ • create_task            │ • create_milestone       │ • generate_plan        │
 │ • analyze_project        │ • update_task            │ • update_milestone       │ • propose_changes      │
-│                          │ • delete_task            │ • create_canvas_node     │ • apply_proposal       │
-│                          │ • batch_create_tasks     │ • update_canvas_node     │ • reject_proposal      │
-│                          │ • archive_task           │ • delete_canvas_node     │ • undo_changes         │
-│                          │                          │ • create_document        │                        │
+│ • search_workspace       │ • delete_task            │ • create_canvas_node     │ • apply_proposal       │
+│ • list_workspace_snapshots│ • batch_create_tasks    │ • update_canvas_node     │ • reject_proposal      │
+│ • save_workspace_snapshot│ • archive_task           │ • delete_canvas_node     │ • undo_changes         │
+│ • restore_workspace_snapshot│                        │ • create_document        │                        │
 │                          │                          │ • update_document        │                        │
 └──────────────────────────┴──────────────────────────┴──────────────────────────┴────────────────────────┘
 ```
@@ -335,23 +428,25 @@ Every tool is strictly registered on `window.document.modelContext` with typed i
 | :- | :--- | :--- | :--- | :--- |
 | **1** | `get_project_state` | `{}` | `WorkspaceState` | Serializes complete project: tasks, milestones, canvas nodes, markdown docs, and telemetry. |
 | **2** | `analyze_project` | `{}` | `AnalyticsSummary` | Computes velocity burndown, completion rates, bottleneck alerts, and team capacity. |
-| **3** | `create_task` | `title, priority, assignee, estimateDays, dueDate, tags` | `{ task: Task }` | Creates a new task with unique ID, ISO timestamps, default status `todo`, and relative tags. |
-| **4** | `update_task` | `taskId, status?, priority?, assignee?, title?, ...` | `{ task: Task }` | Updates any field on a task, automatically stamps `updatedAt`, and triggers reactive UI re-render. |
-| **5** | `delete_task` | `taskId` | `{ success: boolean }` | Safely removes task after taking an internal undo snapshot. |
-| **6** | `batch_create_tasks`| `tasks: TaskInput[]` | `{ tasks: Task[] }` | Atomically creates multiple tasks at once during roadmap generation. |
-| **7** | `archive_task` | `taskId, unarchive?` | `{ task: Task }` | Toggles archival state; removes clutter from active board without destroying records. |
-| **8** | `create_milestone` | `title, targetDate, description, deliverables[]` | `{ milestone: Milestone }` | Adds a strategic phase with target milestones and percentage completion meters. |
-| **9** | `update_milestone` | `milestoneId, status?, progress?, targetDate?` | `{ milestone: Milestone }`| Adjusts milestone status (`upcoming`, `in_progress`, `completed`) and deliverables. |
-| **10**| `create_canvas_node`| `type, label, x, y, color, content` | `{ node: CanvasNode }` | Adds an interactive 2D spatial card to the infinite concept canvas. |
-| **11**| `update_canvas_node`| `nodeId, x?, y?, label?, content?, color?` | `{ node: CanvasNode }` | Modifies position coordinates or text content of a canvas node. |
-| **12**| `delete_canvas_node`| `nodeId` | `{ success: boolean }` | Removes a canvas node and cleans up connected relationship edges. |
-| **13**| `create_document` | `title, content, tags[]` | `{ doc: Document }` | Creates a new technical markdown specification or engineering PRD. |
-| **14**| `update_document` | `documentId, title?, content?` | `{ doc: Document }` | Updates markdown document content with live word-count calculations. |
-| **15**| `generate_plan` | `goal, timeframeDays, teamSize, focusAreas[]` | `{ plan: PlanProposal }`| AI synthesizes a full multi-tier roadmap with milestones, tasks, and effort distributions. |
-| **16**| `propose_changes` | `title, description, patch[]` | `{ proposal: Proposal }`| Triggers the Visual Diff Proposal modal requiring human approval before mutation. |
-| **17**| `apply_proposal` | `proposalId` | `{ success: boolean }` | Captures an immutable snapshot, applies proposal patch atomically, and logs telemetry. |
-| **18**| `reject_proposal` | `proposalId` | `{ success: boolean }` | Declines proposal and discards pending patch with zero state modification. |
-| **19**| `undo_changes` | `{}` | `{ restored: boolean }` | Restores previous workspace snapshot from the stack (zero-data-loss rollback). |
+| **3** | `search_workspace` | `query, filterType?, limit?` | `{ results: SearchItem[] }` | Full-text and token search with relevance scoring across all workspace views. |
+| **4** | `save_workspace_snapshot` | `name, description?, tags?` | `{ snapshotId, stats }` | Persists entire workspace state to a named JSON snapshot in browser `localStorage`. |
+| **5** | `list_workspace_snapshots` | `{}` | `{ snapshots: SnapshotSummary[] }` | Queries all stored snapshots with metadata, resource counts, and byte size. |
+| **6** | `restore_workspace_snapshot` | `snapshotId, createBackupFirst?` | `{ restoredCounts }` | Restores all views, tasks, and roadmaps from a snapshot with automatic safety backup. |
+| **7** | `create_task` | `title, priority, assignee, estimateDays, dueDate, tags` | `{ task: Task }` | Creates a new task with unique ID, ISO timestamps, default status `todo`, and relative tags. |
+| **8** | `update_task` | `taskId, status?, priority?, assignee?, title?, ...` | `{ task: Task }` | Updates any field on a task, automatically stamps `updatedAt`, and triggers reactive UI re-render. |
+| **9** | `delete_task` | `taskId` | `{ success: boolean }` | Safely removes task after taking an internal undo snapshot. |
+| **10**| `batch_create_tasks`| `tasks: TaskInput[]` | `{ tasks: Task[] }` | Atomically creates multiple tasks at once during roadmap generation. |
+| **11**| `archive_task` | `taskId, unarchive?` | `{ task: Task }` | Toggles archival state; removes clutter from active board without destroying records. |
+| **12**| `create_milestone` | `title, targetDate, description, deliverables[]` | `{ milestone: Milestone }` | Adds a strategic phase with target milestones and percentage completion meters. |
+| **13**| `update_milestone` | `milestoneId, status?, progress?, targetDate?` | `{ milestone: Milestone }`| Adjusts milestone status (`upcoming`, `in_progress`, `completed`) and deliverables. |
+| **14**| `create_canvas_node`| `type, label, x, y, color, content` | `{ node: CanvasNode }` | Adds an interactive 2D spatial card to the infinite concept canvas. |
+| **15**| `update_canvas_node`| `nodeId, x?, y?, label?, content?, color?` | `{ node: CanvasNode }` | Modifies position coordinates or text content of a canvas node. |
+| **16**| `delete_canvas_node`| `nodeId` | `{ success: boolean }` | Removes a canvas node and cleans up connected relationship edges. |
+| **17**| `create_document` | `title, content, tags[]` | `{ doc: Document }` | Creates a new technical markdown specification or engineering PRD. |
+| **18**| `update_document` | `documentId, title?, content?` | `{ doc: Document }` | Updates markdown document content with live word-count calculations. |
+| **19**| `generate_plan` | `goal, timeframeDays, teamSize, focusAreas[]` | `{ plan: PlanProposal }`| AI synthesizes a full multi-tier roadmap with milestones, tasks, and effort distributions. |
+| **20**| `propose_changes` | `title, description, patch[]` | `{ proposal: Proposal }`| Triggers the Visual Diff Proposal modal requiring human approval before mutation. |
+| **21**| `undo_changes` | `{}` | `{ restored: boolean }` | Restores previous workspace snapshot from the stack (zero-data-loss rollback). |
 
 ---
 
@@ -481,6 +576,46 @@ await window.document.modelContext.execute("batch_create_tasks", {
 
 ## ♿ Productivity & Accessibility Systems
 
+### Workspace Snapshots (LocalStorage Time Machine)
+
+Forge includes an industrial-grade snapshot storage system (`/src/services/snapshotStorageService.ts` and `/src/components/SnapshotManagerModal.tsx`) that serializes and stores the complete state of all workspace views directly into the browser's `localStorage` (`forge_workspace_snapshots_v1`):
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 📸 WORKSPACE SNAPSHOT MANAGER                                                      [✕ Close / Esc]     │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 💡 CURRENT WORKSPACE: 9 Tasks (6 Urgent/High) • 3 Milestones • 2 Docs • 4 Canvas Cards • 14.5 KB       │
+│                                                                                                        │
+│ ┌─ Quick Snapshot ───────────────────────────────────────────────────────────────────────────────────┐ │
+│ │ Name: [Sprint 1 Baseline Before Scope Reduction   ]  Tags: [baseline, sprint-1]  [📸 Capture State] │ │
+│ └────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                                        │
+│ 📂 SAVED SNAPSHOTS (3 Saved • Total Storage: 43.8 KB / 5 MB)                                           │
+│ ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │ 🌟 Sprint 1 Baseline Before Scope Reduction                                   [2m ago] [Restore]  │ │
+│ │    9 tasks (44% done) • 14 estimate days • Active View: Kanban Board                               │ │
+│ ├────────────────────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ 🤖 Auto-Backup Before Agent Proposal                                          [18m ago] [Restore] │ │
+│ │    11 tasks (36% done) • 22 estimate days • Active View: Milestones                                │ │
+│ ├────────────────────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ 🏁 Seed Demo Workspace (Starter)                                              [1d ago] [Restore]  │ │
+│ │    9 tasks (44% done) • 14 estimate days • Active View: Kanban Board                               │ │
+│ └────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                                        │
+│ [📥 Export Selected to JSON]         [📤 Import JSON Snapshot File]              [🗑️ Clear Old Backups]│
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Key Capabilities of the Snapshot System:
+1. **Full-State Preservation**: Captures everything across all 5 workspace views—Project metadata, Kanban tasks, subtask completion checklists, milestone deliverables, markdown documentation vaults, and 2D canvas nodes.
+2. **View State Restoration**: Preserves not just data, but your working environment: active tab (`board`, `list`, `milestones`, `canvas`, `docs`), horizontal swimlane grouping (`phase`, `urgency`, `none`), color theme (`light`, `dark`), and font scaling mode.
+3. **Automated Safety Backups**: Restoring any past snapshot automatically creates a safety checkpoint of the current workspace first, ensuring you can never accidentally lose in-flight edits.
+4. **Calculated Deep Metrics**: Each snapshot displays computed metrics without needing to load or parse the data: completion percentage, total estimated effort days, task counts by status and priority, and serialized byte size.
+5. **JSON Portability**: 1-click export of any snapshot into a formatted `.json` file for team sharing, git commits, or external archival, with robust schema validation on import.
+6. **Agent WebMCP Integration**: AI agents can invoke `save_workspace_snapshot`, `list_workspace_snapshots`, and `restore_workspace_snapshot` autonomously via the WebMCP interface.
+
+---
+
 ### 3-Tier Global Font Scaling
 
 Forge features a global font scaling engine managed in `ThemeContext` and applied via CSS variables at the HTML root:
@@ -604,6 +739,7 @@ graph TD
 | :--- | :--- | :--- |
 | `Ctrl+K` / `Cmd+K` | Open Global Command Palette | Global |
 | `Ctrl+P` / `Cmd+P` | Open Pending Diff Proposal Modal | Global |
+| `Ctrl+Shift+S` / `Cmd+Shift+S` | Open Workspace Snapshot Manager (LocalStorage Time Machine) | Global |
 | `Escape` | Exit Zen Mode / Dismiss Modals | Global |
 | `Enter` | Save Inline Task Edit / Send Chat Prompt | Forms & Cards |
 | `Space` (when focused) | Toggle Task Status (To Do ⟷ Done) | Kanban & Task List |
@@ -628,19 +764,26 @@ forge/
     ├── index.css                      # Tailwind CSS v4 entry point & font size mode variables
     │
     ├── types/
-    │   └── forge.ts                   # Core TypeScript interfaces: Task, Milestone, Proposal, WebMCP
+    │   ├── forge.ts                   # Core TypeScript interfaces: Task, Milestone, Proposal, WebMCP
+    │   └── snapshot.ts                # Snapshot records, calculated metrics, view configurations
+    │
+    ├── services/
+    │   ├── workspaceService.ts        # Central service for WebMCP tools and state mutations
+    │   └── snapshotStorageService.ts  # LocalStorage persistence, deep stats, JSON import/export
     │
     ├── context/
     │   ├── WorkspaceContext.tsx       # Central state store, snapshot stack, and WebMCP registry
-    │   └── ThemeContext.tsx           # Dark/Light theme & Compact/Comfortable/Spacious font scaling
+    │   ├── ThemeContext.tsx           # Dark/Light theme & Compact/Comfortable/Spacious font scaling
+    │   └── ToastContext.tsx           # Global non-blocking toast notifications
     │
     ├── utils/
     │   └── taskFilters.ts             # Subsequence fuzzy search & relative time formatters
     │
     └── components/
-        ├── Navigation.tsx             # Top header with view switcher, Zen toggle, theme & font controls
+        ├── Navigation.tsx             # Top header with view switcher, Zen toggle, Snapshots, theme & font controls
+        ├── SnapshotManagerModal.tsx   # LocalStorage Time Machine UI (take, restore, export, import, inspect)
         ├── AgentPanel.tsx             # Integrated AI copilot panel with Web Speech voice visualizer
-        ├── ProposalModal.tsx          # Visual diff inspector for approving/rejecting agent proposals
+        ├── ProposalReviewModal.tsx    # Visual diff inspector for approving/rejecting agent proposals
         ├── CommandPaletteModal.tsx    # Global Ctrl+K full-text search and quick-action menu
         ├── DashboardAnalyticsOverlay.tsx # 30-day task velocity and agent burndown visualizer
         ├── TaskCardModal.tsx          # Rich modal with subtask checklists and custom date picker

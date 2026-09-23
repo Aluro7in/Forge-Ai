@@ -16,6 +16,7 @@ import { WebMcpInspector } from './components/WebMcpInspector';
 import { HeroDemoRunner } from './components/HeroDemoRunner';
 import { WebMcpExplainerModal } from './components/WebMcpExplainerModal';
 import { DashboardAnalyticsOverlay } from './components/DashboardAnalyticsOverlay';
+import { SnapshotManagerModal } from './components/SnapshotManagerModal';
 import { KanbanBoardView } from './components/views/KanbanBoardView';
 import { TaskListView } from './components/views/TaskListView';
 import { MilestonesView } from './components/views/MilestonesView';
@@ -30,6 +31,7 @@ function WorkspaceLayout() {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isSnapshotModalOpen, setIsSnapshotModalOpen] = useState(false);
   const [isDashboardOverlayOpen, setIsDashboardOverlayOpen] = useState(false);
   const [agentExternalPrompt, setAgentExternalPrompt] = useState<string | null>(null);
 
@@ -53,7 +55,7 @@ function WorkspaceLayout() {
     });
   };
 
-  // Global Keyboard Shortcuts: Ctrl+K / Cmd+K (Search), Ctrl+P / Cmd+P (Proposal), Escape (Exit Zen Mode)
+  // Global Keyboard Shortcuts: Ctrl+K / Cmd+K (Search), Ctrl+P / Cmd+P (Proposal), Ctrl+Shift+S / Cmd+Shift+S (Snapshots), Escape (Exit Zen Mode)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -72,6 +74,10 @@ function WorkspaceLayout() {
         e.preventDefault();
         e.stopPropagation();
         setIsProposalModalOpen(true);
+      } else if (e.key.toLowerCase() === 's' && e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsSnapshotModalOpen((prev) => !prev);
       }
     };
 
@@ -108,6 +114,7 @@ function WorkspaceLayout() {
         onOpenHelp={() => setIsHelpOpen(true)}
         onOpenSearch={() => setIsCommandPaletteOpen(true)}
         onOpenDashboardOverlay={() => setIsDashboardOverlayOpen(true)}
+        onOpenSnapshotManager={() => setIsSnapshotModalOpen(true)}
         onToggleAgentPanel={() => {
           if (isZenMode) setIsZenMode(false);
           setIsAgentPanelOpen(!isAgentPanelOpen);
@@ -171,6 +178,15 @@ function WorkspaceLayout() {
         onClose={() => setIsCommandPaletteOpen(false)}
         onNavigateView={setActiveView}
         onOpenProposalModal={handleOpenProposal}
+        onOpenSnapshotManager={() => setIsSnapshotModalOpen(true)}
+      />
+
+      {/* Workspace Snapshots Manager Modal (Ctrl+Shift+S) */}
+      <SnapshotManagerModal
+        isOpen={isSnapshotModalOpen}
+        onClose={() => setIsSnapshotModalOpen(false)}
+        activeView={activeView}
+        onNavigateView={setActiveView}
       />
 
       {/* Proposal Review Modal (Ctrl+P) */}
