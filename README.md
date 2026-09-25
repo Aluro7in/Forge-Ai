@@ -93,6 +93,8 @@ Most project tools force humans to do 100% of the manual clicking, dragging, and
 
 | Feature | Category | Description | Visual Impact |
 | :--- | :--- | :--- | :--- |
+| **Priority System & Sort** | *Kanban & Prioritization* | 4-tier priority system (**Critical, High, Medium, Low**) with visual colored badges and sort-by-priority function (**Critical First**, **Low First**, **Default**). | Dedicated toolbar sort selector, column-level toggle buttons, active sorting banner, and card accent borders. |
+| **AI Suggestion Badges** | *Human-Agent Co-Creation* | Subtle AI-generated **Suggestion** badges highlighting tasks auto-populated or modified by the agent. | Tasteful `✨ Suggestion` pill in Task List & Kanban cards, co-creation rationale tooltips, and `Suggestions (N)` filter. |
 | **Workspace Snapshots** | *State Persistence* | Complete JSON snapshot engine storing all views, tasks, milestones, canvas cards, and documents in browser `localStorage`. | Persistent `Snapshots (N)` toolbar button, quick-save bar, auto-backup before restore, JSON export/import. |
 | **Fuzzy-Search Filter** | *Search & Discovery* | Multi-token subsequence matching across task titles, descriptions, assignees, IDs, and `#tags`. | Live counter pill (`Showing 3 of 10 tasks`), real-time highlights, instant `✕` clear. |
 | **Zen Mode** | *Focus & Productivity* | One-click distraction-free toggle hiding navigation sidebars, agent sidepanel, and chrome. | Full-width workspace, floating HUD status bar, instant exit via `Esc` or button. |

@@ -18,6 +18,7 @@ export interface SnapshotTaskBreakdown {
 }
 
 export interface SnapshotPriorityBreakdown {
+  critical?: number;
   urgent: number;
   high: number;
   medium: number;

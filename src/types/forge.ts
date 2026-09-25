@@ -1,5 +1,5 @@
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent' | 'critical';
 
 export interface Subtask {
   id: string;
@@ -35,6 +35,10 @@ export interface Task {
   timeSpentSeconds?: number;
   archived?: boolean;
   archivedAt?: string;
+  isAgentCreated?: boolean;
+  isAgentModified?: boolean;
+  agentSuggested?: boolean;
+  suggestionRationale?: string;
   createdAt: string;
   updatedAt: string;
 }

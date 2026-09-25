@@ -135,8 +135,16 @@ export const PRIORITY_CONFIG: Record<
     description: string;
   }
 > = {
+  critical: {
+    label: 'Critical',
+    borderClass: 'border-l-4 border-l-red-600',
+    badgeClass: 'bg-red-50 text-red-700 border-red-300 font-bold',
+    dotClass: 'bg-red-600',
+    iconColor: 'text-red-600',
+    description: 'Immediate blocker / critical production impact',
+  },
   urgent: {
-    label: 'Urgent',
+    label: 'Critical',
     borderClass: 'border-l-4 border-l-red-600',
     badgeClass: 'bg-red-50 text-red-700 border-red-300 font-bold',
     dotClass: 'bg-red-600',
@@ -586,9 +594,9 @@ export const TaskCardModal: React.FC<TaskCardModalProps> = ({
                     </span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                    {(['low', 'medium', 'high', 'urgent'] as TaskPriority[]).map((p) => {
+                    {(['low', 'medium', 'high', 'critical'] as TaskPriority[]).map((p) => {
                       const cfg = PRIORITY_CONFIG[p];
-                      const isSelected = priority === p;
+                      const isSelected = priority === p || (p === 'critical' && priority === 'urgent');
                       return (
                         <button
                           key={p}

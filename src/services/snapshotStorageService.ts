@@ -57,6 +57,7 @@ export function calculateSnapshotStats(data: {
   };
 
   const tasksByPriority = {
+    critical: 0,
     urgent: 0,
     high: 0,
     medium: 0,
@@ -73,7 +74,10 @@ export function calculateSnapshotStats(data: {
       tasksByStatus[t.status as keyof typeof tasksByStatus]++;
     }
 
-    if (t.priority in tasksByPriority) {
+    if (t.priority === 'critical' || t.priority === 'urgent') {
+      tasksByPriority.critical++;
+      tasksByPriority.urgent++;
+    } else if (t.priority in tasksByPriority) {
       tasksByPriority[t.priority as keyof typeof tasksByPriority]++;
     }
 

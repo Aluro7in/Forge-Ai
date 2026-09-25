@@ -29,6 +29,7 @@ import {
   Maximize2,
   Flame,
   MessageSquare,
+  ArrowUpDown,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { Task, TaskStatus, TaskPriority, Milestone } from '../../types/forge';
@@ -54,11 +55,24 @@ interface KanbanBoardViewProps {
   onOpenAnalytics?: () => void;
 }
 
+export const getPriorityRank = (p: TaskPriority | string | undefined): number => {
+  if (p === 'critical' || p === 'urgent') return 4;
+  if (p === 'high') return 3;
+  if (p === 'medium') return 2;
+  if (p === 'low') return 1;
+  return 0;
+};
+
+export type PrioritySortMode = 'none' | 'critical-first' | 'low-first';
+
 export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytics }) => {
   const { tasks, setTasks, milestones, executeToolByName } = useWorkspace();
 
   // Fuzzy Search on Board State
   const [boardSearchQuery, setBoardSearchQuery] = useState('');
+
+  // Priority Sort Mode State (Default Manual Order, Critical First, Low First)
+  const [prioritySort, setPrioritySort] = useState<PrioritySortMode>('none');
 
   // Active vs Archived Tasks Segregation
   const activeTasks = useMemo(() => tasks.filter((t) => !t.archived), [tasks]);
@@ -181,24 +195,25 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
     if (swimlaneMode === 'urgency') {
       return [
         {
-          id: 'urgent',
-          title: 'Urgent Priority',
-          description: 'Critical path blockers and immediate launch gate items',
+          id: 'critical',
+          title: 'Critical Priority',
+          description: 'Critical path blockers, production gates, and immediate launch dependencies',
           badge: (
-            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-black text-white font-bold border border-black">
-              Critical Urgency
+            <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-red-600 text-white font-bold border border-red-700 shadow-2xs">
+              <Flame className="w-2.5 h-2.5 text-white shrink-0" />
+              <span>Critical Priority</span>
             </span>
           ),
-          filter: (task: Task) => task.priority === 'urgent',
-          targetPatch: { priority: 'urgent' },
-          colorAccent: '#000000',
+          filter: (task: Task) => task.priority === 'critical' || task.priority === 'urgent',
+          targetPatch: { priority: 'critical' },
+          colorAccent: '#DC2626',
         },
         {
           id: 'high',
           title: 'High Priority',
           description: 'Core launch deliverables and primary milestone dependencies',
           badge: (
-            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-stone-200 text-stone-900 border border-stone-400 font-bold">
+            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-400 font-bold">
               High Impact
             </span>
           ),
@@ -211,26 +226,26 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
           title: 'Medium Priority',
           description: 'Standard product engineering flow and feature requirements',
           badge: (
-            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-white text-stone-800 border border-stone-300 font-bold">
+            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-blue-50 text-blue-900 border border-blue-300 font-bold">
               Medium
             </span>
           ),
           filter: (task: Task) => task.priority === 'medium',
           targetPatch: { priority: 'medium' },
-          colorAccent: '#64748B',
+          colorAccent: '#3B82F6',
         },
         {
           id: 'low',
           title: 'Low Priority',
-          description: 'Non-blocking polish, edge case enhancements, and secondary items',
+          description: 'Non-blocking polish, edge case enhancements, and secondary backlog items',
           badge: (
-            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-stone-100 text-stone-500 border border-stone-200 font-bold">
+            <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider bg-stone-100 text-stone-600 border border-stone-300 font-bold">
               Low
             </span>
           ),
           filter: (task: Task) => task.priority === 'low',
           targetPatch: { priority: 'low' },
-          colorAccent: '#A8A29E',
+          colorAccent: '#94A3B8',
         },
       ];
     }
@@ -650,13 +665,18 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
   };
 
   const renderPriorityBadge = (p: TaskPriority) => {
-    const config = PRIORITY_CONFIG[p] || PRIORITY_CONFIG.medium;
+    const normalizedKey = (p === 'urgent' ? 'critical' : p) || 'medium';
+    const config = PRIORITY_CONFIG[normalizedKey] || PRIORITY_CONFIG.medium;
+    const isCritical = p === 'critical' || p === 'urgent';
     return (
       <span
-        className={`inline-flex items-center space-x-1 px-1.5 py-0.5 text-[9px] font-bold uppercase font-mono border ${config.badgeClass}`}
+        className={`inline-flex items-center space-x-1 px-1.5 py-0.5 text-[9px] font-bold uppercase font-mono border transition ${
+          config.badgeClass
+        } ${isCritical ? 'shadow-2xs ring-1 ring-red-500/20' : ''}`}
         title={`Priority: ${config.label} - ${config.description}`}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${config.dotClass}`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${config.dotClass} ${isCritical ? 'animate-pulse' : ''}`} />
+        {isCritical && <Flame className="w-2.5 h-2.5 text-red-600 dark:text-red-400 shrink-0" />}
         <span>{config.label}</span>
       </span>
     );
@@ -761,6 +781,51 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
             </button>
           </div>
 
+          {/* Priority Sorting Segmented Selector */}
+          <div className="flex items-center space-x-1 bg-stone-100 dark:bg-stone-900 p-1 border border-stone-300 dark:border-stone-700">
+            <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider px-2 py-0.5 hidden xl:inline">
+              Sort:
+            </span>
+            <button
+              type="button"
+              onClick={() => setPrioritySort('none')}
+              className={`px-2 py-1 text-[10px] font-mono uppercase tracking-wider transition ${
+                prioritySort === 'none'
+                  ? 'bg-black text-white dark:bg-white dark:text-black font-bold shadow-2xs'
+                  : 'text-stone-600 dark:text-stone-400 hover:text-black dark:hover:text-white hover:bg-stone-200/70 dark:hover:bg-stone-800'
+              }`}
+              title="Manual / default board drag-and-drop ordering"
+            >
+              Default
+            </button>
+            <button
+              type="button"
+              onClick={() => setPrioritySort('critical-first')}
+              className={`flex items-center space-x-1 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider transition ${
+                prioritySort === 'critical-first'
+                  ? 'bg-red-600 text-white font-bold shadow-2xs'
+                  : 'text-stone-600 dark:text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30'
+              }`}
+              title="Sort tasks within columns: Critical → High → Medium → Low"
+            >
+              <Flame className="w-3 h-3 text-current" />
+              <span>Critical First</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPrioritySort('low-first')}
+              className={`flex items-center space-x-1 px-2 py-1 text-[10px] font-mono uppercase tracking-wider transition ${
+                prioritySort === 'low-first'
+                  ? 'bg-stone-800 text-white dark:bg-stone-200 dark:text-black font-bold shadow-2xs'
+                  : 'text-stone-600 dark:text-stone-400 hover:text-black dark:hover:text-white hover:bg-stone-200/70 dark:hover:bg-stone-800'
+              }`}
+              title="Sort tasks within columns: Low → Medium → High → Critical"
+            >
+              <ArrowUpDown className="w-3 h-3 text-current" />
+              <span>Low First</span>
+            </button>
+          </div>
+
           {/* Archived Tasks Drawer/Modal Trigger */}
           <button
             type="button"
@@ -805,6 +870,25 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
             className="underline hover:text-black dark:hover:text-white transition font-medium cursor-pointer"
           >
             Clear filter
+          </button>
+        </div>
+      )}
+
+      {/* Active Priority Sorting Feedback Banner */}
+      {prioritySort !== 'none' && (
+        <div className="flex items-center justify-between px-3.5 py-2 bg-red-50/90 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 text-xs font-mono text-red-900 dark:text-red-200 animate-in fade-in">
+          <div className="flex items-center space-x-2">
+            <Flame className="w-3.5 h-3.5 text-red-600 shrink-0" />
+            <span>
+              Columns sorted by Priority ({prioritySort === 'critical-first' ? 'Critical → High → Medium → Low' : 'Low → Medium → High → Critical'})
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPrioritySort('none')}
+            className="underline hover:text-black dark:hover:text-white transition font-medium cursor-pointer"
+          >
+            Reset to default order
           </button>
         </div>
       )}
@@ -868,11 +952,11 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
             />
 
             <select
-              value={newTaskPriority}
+              value={newTaskPriority === 'urgent' ? 'critical' : newTaskPriority}
               onChange={(e) => setNewTaskPriority(e.target.value as TaskPriority)}
               className="sm:col-span-2 bg-white border border-stone-300 rounded-none px-2 py-2 text-xs text-black focus:outline-hidden focus:border-black uppercase font-mono text-[11px]"
             >
-              <option value="urgent">🔴 Urgent</option>
+              <option value="critical">🔴 Critical</option>
               <option value="high">🟠 High</option>
               <option value="medium">🔵 Medium</option>
               <option value="low">⚪ Low</option>
@@ -1034,7 +1118,13 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
               {!isCollapsed && (
                 <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${swimlaneMode !== 'none' ? 'p-4 bg-stone-50/40' : ''}`}>
                   {columns.map((col) => {
-                    const colTasks = swimlaneTasks.filter((t) => t.status === col.id);
+                    let colTasks = swimlaneTasks.filter((t) => t.status === col.id);
+                    if (prioritySort === 'critical-first') {
+                      colTasks = [...colTasks].sort((a, b) => getPriorityRank(b.priority) - getPriorityRank(a.priority));
+                    } else if (prioritySort === 'low-first') {
+                      colTasks = [...colTasks].sort((a, b) => getPriorityRank(a.priority) - getPriorityRank(b.priority));
+                    }
+
                     const isOverColumn =
                       dragOverColumn?.swimlaneId === swimlane.id && dragOverColumn?.colId === col.id;
 
@@ -1054,16 +1144,56 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                       >
                         {/* Column Header */}
                         <div className="flex items-center justify-between pb-2 mb-3 border-b border-stone-200">
-                          <div className="flex items-center space-x-1.5">
-                            <span className="font-bold text-[11px] text-stone-800 uppercase tracking-widest">
+                          <div className="flex items-center space-x-1.5 min-w-0">
+                            <span className="font-bold text-[11px] text-stone-800 uppercase tracking-widest truncate">
                               {col.title}
                             </span>
                             <span className="text-[10px] font-mono text-stone-400">
                               ({String(colTasks.length).padStart(2, '0')})
                             </span>
+                            {prioritySort !== 'none' && (
+                              <span
+                                className={`px-1 py-0.2 text-[8px] font-mono uppercase font-bold tracking-wider border rounded-2xs ${
+                                  prioritySort === 'critical-first'
+                                    ? 'bg-red-50 text-red-700 border-red-200'
+                                    : 'bg-stone-100 text-stone-700 border-stone-300'
+                                }`}
+                                title={`Tasks sorted by priority (${prioritySort === 'critical-first' ? 'Critical first' : 'Low first'})`}
+                              >
+                                {prioritySort === 'critical-first' ? '▼ Crit' : '▲ Low'}
+                              </span>
+                            )}
                           </div>
 
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1.5">
+                            {/* Column-level quick toggle for priority sort */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPrioritySort((prev) =>
+                                  prev === 'none'
+                                    ? 'critical-first'
+                                    : prev === 'critical-first'
+                                    ? 'low-first'
+                                    : 'none'
+                                );
+                              }}
+                              className={`p-1 text-[9px] font-mono transition border ${
+                                prioritySort !== 'none'
+                                  ? 'bg-black text-white border-black'
+                                  : 'text-stone-400 hover:text-black border-transparent hover:border-stone-300'
+                              }`}
+                              title={
+                                prioritySort === 'critical-first'
+                                  ? 'Sorted: Critical first (Click to sort Low first)'
+                                  : prioritySort === 'low-first'
+                                  ? 'Sorted: Low first (Click to reset to default order)'
+                                  : 'Sort column by priority (Critical first)'
+                              }
+                            >
+                              <ArrowUpDown className="w-3 h-3" />
+                            </button>
                             {/* Quick Archive All Completed Button in Done Column Header */}
                             {col.id === 'done' && colTasks.length > 0 && (
                               <button
@@ -1199,7 +1329,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                           Priority
                                         </label>
                                         <select
-                                          value={editValues.priority}
+                                          value={editValues.priority === 'urgent' ? 'critical' : editValues.priority}
                                           onChange={(e) =>
                                             setEditValues({
                                               ...editValues,
@@ -1208,7 +1338,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                           }
                                           className="w-full bg-stone-50 border border-stone-300 p-1 text-[10px] font-mono uppercase focus:outline-hidden focus:border-black"
                                         >
-                                          <option value="urgent">Urgent</option>
+                                          <option value="critical">Critical</option>
                                           <option value="high">High</option>
                                           <option value="medium">Medium</option>
                                           <option value="low">Low</option>
@@ -1339,17 +1469,17 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                         ? 'opacity-40 border-dashed border-black bg-stone-100 scale-[0.98]'
                                         : 'bg-[#FCFAF7] border-stone-200 hover:border-black hover:shadow-md shadow-xs'
                                     } ${
-                                      task.priority === 'urgent'
-                                        ? 'border-l-4 border-l-red-500'
+                                      task.priority === 'critical' || task.priority === 'urgent'
+                                        ? 'border-l-4 border-l-red-600'
                                         : task.priority === 'high'
                                         ? 'border-l-4 border-l-amber-500'
                                         : task.priority === 'medium'
                                         ? 'border-l-4 border-l-blue-500'
-                                        : 'border-l-4 border-l-slate-300'
+                                        : 'border-l-4 border-l-slate-400'
                                     } ${!isEditing ? 'cursor-grab active:cursor-grabbing' : ''}`}
                                   >
                                     <div className="flex items-start justify-between gap-2">
-                                      <div className="flex items-center space-x-1.5 min-w-0">
+                                      <div className="flex items-center space-x-1.5 min-w-0 flex-wrap gap-y-1">
                                         <div
                                           className="text-stone-400 hover:text-black cursor-grab active:cursor-grabbing p-0.5 -ml-1 transition shrink-0"
                                           title="Drag to reorder within column or across swimlanes"
@@ -1359,6 +1489,15 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({ onOpenAnalytic
                                         <span className="text-[9px] font-mono text-stone-400 uppercase tracking-wider truncate">
                                           {task.id.toUpperCase()}
                                         </span>
+                                        {(task.agentSuggested || task.isAgentCreated || task.isAgentModified) && (
+                                          <span
+                                            className="inline-flex items-center space-x-0.5 px-1 py-0.2 text-[8px] font-mono uppercase tracking-wider font-bold bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800/60 rounded-xs shrink-0"
+                                            title={task.suggestionRationale || 'AI Co-Creation: Auto-populated or modified by agent'}
+                                          >
+                                            <Sparkles className="w-2 h-2 text-violet-500 shrink-0" />
+                                            <span>Suggestion</span>
+                                          </span>
+                                        )}
                                         <span className="text-[9px] font-mono text-stone-300 dark:text-stone-600">·</span>
                                         <span
                                           className="inline-flex items-center space-x-0.5 text-[9px] font-mono text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition"

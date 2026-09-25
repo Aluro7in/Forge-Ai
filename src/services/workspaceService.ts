@@ -724,7 +724,7 @@ export class WorkspaceService {
       };
     }
 
-    const validPriorities: TaskPriority[] = ['low', 'medium', 'high', 'urgent'];
+    const validPriorities: TaskPriority[] = ['low', 'medium', 'high', 'urgent', 'critical'];
     if (input.priority && !validPriorities.includes(input.priority)) {
       return {
         success: false,
@@ -767,6 +767,10 @@ export class WorkspaceService {
       tags: input.tags || ['WebMCPCreated'],
       subtasks: input.subtasks || [],
       comments: input.comments || [],
+      isAgentCreated: (input as any).isAgentCreated ?? (input.assignee === 'Forge Agent' || (input.tags && input.tags.includes('AgentSuggested'))),
+      isAgentModified: (input as any).isAgentModified,
+      agentSuggested: (input as any).agentSuggested ?? (input.assignee === 'Forge Agent' || (input.tags && input.tags.some(t => ['AgentSuggested', 'WebMCPCreated', 'CoCreated', 'Agent'].includes(t)))),
+      suggestionRationale: (input as any).suggestionRationale,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -821,7 +825,7 @@ export class WorkspaceService {
       };
     }
 
-    const validPriorities: TaskPriority[] = ['low', 'medium', 'high', 'urgent'];
+    const validPriorities: TaskPriority[] = ['low', 'medium', 'high', 'urgent', 'critical'];
     const validatedNewTasks: Task[] = [];
     const defaultMilestoneId = this.accessor.getMilestones()[0]?.id;
 
@@ -931,7 +935,7 @@ export class WorkspaceService {
       };
     }
 
-    const validPriorities: TaskPriority[] = ['low', 'medium', 'high', 'urgent'];
+    const validPriorities: TaskPriority[] = ['low', 'medium', 'high', 'urgent', 'critical'];
     if (input.priority && !validPriorities.includes(input.priority)) {
       return {
         success: false,
@@ -1827,14 +1831,26 @@ export class WorkspaceService {
 
     for (const change of proposal.changes) {
       if (change.entityType === 'task') {
+        const isAgent = proposal.proposedBy === 'agent';
         if (change.actionType === 'create' && change.afterState) {
-          updatedTasks.push(change.afterState);
+          updatedTasks.push({
+            ...change.afterState,
+            agentSuggested: isAgent ? true : change.afterState.agentSuggested,
+            isAgentCreated: isAgent ? true : change.afterState.isAgentCreated,
+            suggestionRationale: isAgent ? change.reason || proposal.summary : change.afterState.suggestionRationale,
+          });
         } else if (change.actionType === 'delete') {
           updatedTasks = updatedTasks.filter((t) => t.id !== change.entityId);
         } else if (change.actionType === 'update' || change.actionType === 'move') {
           const idx = updatedTasks.findIndex((t) => t.id === change.entityId);
           if (idx >= 0 && change.afterState) {
-            updatedTasks[idx] = { ...updatedTasks[idx], ...change.afterState, updatedAt: new Date().toISOString() };
+            updatedTasks[idx] = {
+              ...updatedTasks[idx],
+              ...change.afterState,
+              isAgentModified: isAgent ? true : updatedTasks[idx].isAgentModified,
+              suggestionRationale: isAgent ? change.reason || proposal.summary : updatedTasks[idx].suggestionRationale,
+              updatedAt: new Date().toISOString(),
+            };
           }
         }
       } else if (change.entityType === 'milestone') {
