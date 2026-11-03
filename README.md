@@ -717,15 +717,6 @@ Clicking **`[↩️ Undo]`** pops the top snapshot and restores the exact previo
 
 Click the **"Hero Demo"** button in the top navigation header to run this interactive 3-step tour:
 
-```mermaid
-graph TD
-    Step1["⚡ STEP 1: Plan Generation<br/>Click 'Generate Launch Plan'<br/>──► AI synthesizes 3 Milestones & 8 Tasks"]
-    Step2["📉 STEP 2: Intelligent Scope Cut<br/>Click 'Reduce Scope for 2-Person Team'<br/>──► AI detects 20d capacity limit & cuts backlog"]
-    Step3["↩️ STEP 3: 1-Click Snapshot Undo<br/>Click 'Undo Scope Reduction'<br/>──► Workspace reverts instantly with zero data loss"]
-
-    Step1 --> Step2 --> Step3
-```
-
 1. **Step 1 — Plan Generation**:
    The agent queries the current project state via WebMCP, identifies missing launch phases, and creates a realistic multi-tier plan with milestones, deliverables, and assigned tasks.
 2. **Step 2 — Intelligent Scope Reduction**:
